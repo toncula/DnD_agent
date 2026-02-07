@@ -16,4 +16,4 @@ __pycache__/
 .DS_Store
 
 #数据库
-.data.raw
+.data/raw/
