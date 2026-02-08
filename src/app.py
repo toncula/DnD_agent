@@ -6,8 +6,8 @@ import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
 
 # --- [新增] 0. 网络代理配置 ---
-os.environ["HTTP_PROXY"] = "http://127.0.0.1:7890"
-os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7890"
+#os.environ["HTTP_PROXY"] = "http://127.0.0.1:7890"
+#os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7890"
 
 # --- 新增依赖 ---
 try:
@@ -82,18 +82,6 @@ def get_book_tree_nodes():
 
 # --- 3. Streamlit 页面设置 ---
 st.set_page_config(page_title="D&D 5E 规则智能体", page_icon="🐉", layout="wide")
-
-# [样式] 白底卡片方案
-st.markdown(
-    """
-    <style>
-    [data-testid="stSidebar"] {
-        color: white !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 
 st.title("🐉 D&D 5E 规则智能助手 (Agentic RAG)")
 

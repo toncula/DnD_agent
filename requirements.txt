@@ -1,6 +1,7 @@
 langchain
 langchain-core
 langchain-google-genai
+langchain-openai
 langchain-chroma
 langgraph
 chromadb
