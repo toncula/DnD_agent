@@ -104,9 +104,13 @@ with st.sidebar:
         final_selected_books = []
     else:
         st.caption("👇 点击箭头展开文件夹，勾选框可全选/反选")
+        default_checked = [
+            path for path in valid_book_paths 
+            if path.startswith("战役设定") or path.startswith("核心规则")
+        ]
         return_val = tree_select(
             nodes,
-            checked=[path for path in valid_book_paths],
+            checked=default_checked,
             expanded=[],
             check_model="all",
             no_cascade=False,
