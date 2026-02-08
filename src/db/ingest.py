@@ -82,7 +82,7 @@ def ingest_data():
     total_docs = len(docs)
 
     # 我们可以把 batch size 稍微调大一点，Gemini 的速率限制通常比较宽容
-    batch_size = 20
+    batch_size = 50
 
     for i in tqdm(range(0, total_docs, batch_size)):
         batch = docs[i : i + batch_size]

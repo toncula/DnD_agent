@@ -3,7 +3,9 @@ from typing import Annotated, Literal, TypedDict
 from dotenv import load_dotenv
 
 import sys
-
+import os
+os.environ["HTTP_PROXY"] = "http://127.0.0.1:7890"
+os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7890"
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[2]))
@@ -82,6 +84,65 @@ def reasoner(state: AgentState):
 
     messages = state["messages"]
 
+    base_system_prompt = f"""你是一个精通 D&D 5E (龙与地下城) 中文规则的地下城主(DM)助手。
+
+    
+
+    **当前环境限制**:
+
+    用户仅允许你参考以下规则书: {books if books else '所有可用规则书'}。
+
+    
+
+    **你的行动准则**:
+
+    1. **必须查书**: 遇到规则问题，必须调用 `search_rules` 工具检索，严禁仅凭记忆或臆造回答。
+
+    2. **参数传递**: 调用工具时，必须将上面的规则书列表准确传递给 `book_filter` 参数。
+
+    3. **具体胜过一般**: 如果检索结果中，职业特性/专长描述与通用战斗规则冲突，以具体的特性为准 (Specific Beats General)。
+
+    4. **引用来源**: 回答必须注明信息来源（例如：根据《玩家手册》第x章...）。
+
+    5. **诚实**: 如果查不到，就说查不到。
+
+    """
+
+    # --- [新增] 软性循环限制逻辑 (Soft Limit) ---
+    # 计算当前对话轮次中 Agent 调用工具的次数
+    # 只要倒序遍历直到找到 HumanMessage (用户的最后一句话)
+    current_turn_tool_calls = 0
+    for msg in reversed(messages):
+        if isinstance(msg, HumanMessage):
+            break
+        if isinstance(msg, AIMessage) and msg.tool_calls:
+            current_turn_tool_calls += 1
+
+    # 设置阈值：最多允许尝试 5 次搜索
+    MAX_TOOL_RETRIES = 10
+
+    if current_turn_tool_calls >= MAX_TOOL_RETRIES:
+        # 强制停止：使用不带工具的原始 LLM 生成回复
+        # 这样它就无法再调用 search_rules 了，只能说话
+        force_stop_prompt = f"""
+         [系统指令]：你已经连续进行了 {current_turn_tool_calls} 次检索，这已达到系统上限。
+         请**立即停止搜索**，防止陷入死循环。
+         请根据目前你已经检索到的信息（如果有），尝试回答用户的问题。
+         如果完全没有找到相关信息，请直接礼貌地告知用户“在当前选定的规则书中未找到相关内容”，并建议用户尝试更换关键词或勾选更多规则书。
+         """
+
+        # 插入临时提示词
+        input_messages = (
+            [SystemMessage(content=base_system_prompt)]
+            + messages
+            + [SystemMessage(content=force_stop_prompt)]
+        )
+
+        # [关键] 调用 llm (原始模型) 而不是 llm_with_tools
+        response = llm.invoke(input_messages)
+
+        return {"messages": [response]}
+
     # --- [新增] 防死循环逻辑：分析历史搜索记录 ---
 
     previous_searches = []
@@ -123,35 +184,11 @@ def reasoner(state: AgentState):
 
     # 系统提示词 (System Prompt) - 这里的指令至关重要
 
-    system_prompt = f"""你是一个精通 D&D 5E (龙与地下城) 中文规则的地下城主(DM)助手。
+    # 构造消息历史：SystemPrompt + HistoryWarning + ChatHistory
 
-    
-
-    **当前环境限制**:
-
-    用户仅允许你参考以下规则书: {books if books else '所有可用规则书'}。
-
-    
-
-    **你的行动准则**:
-
-    1. **必须查书**: 遇到规则问题，必须调用 `search_rules` 工具检索，严禁仅凭记忆或臆造回答。
-
-    2. **参数传递**: 调用工具时，必须将上面的规则书列表准确传递给 `book_filter` 参数。
-
-    3. **具体胜过一般**: 如果检索结果中，职业特性/专长描述与通用战斗规则冲突，以具体的特性为准 (Specific Beats General)。
-
-    4. **引用来源**: 回答必须注明信息来源（例如：根据《玩家手册》第x章...）。
-
-    5. **诚实**: 如果查不到，就说查不到。
-
-    {history_warning}
-
-    """
-
-    # 构造消息历史：SystemPrompt + ChatHistory
-
-    messages = [SystemMessage(content=system_prompt)] + state["messages"]
+    messages = [SystemMessage(content=base_system_prompt + history_warning)] + state[
+        "messages"
+    ]
 
     # 调用 LLM
 

@@ -48,10 +48,10 @@ def search_rules(query: str, book_filter: list[str] = None):
             filter_dict = {"source_book": {"$in": book_filter}}
 
     # 执行相似度搜索
-    # k=10 表示返回 10 个最相关的片段
+    # k=5 表示返回 5 个最相关的片段
     try:
         results = vector_store.similarity_search(
-            query, k=10, filter=filter_dict if filter_dict else None
+            query, k=5, filter=filter_dict if filter_dict else None
         )
     except Exception as e:
         return f"检索出错: {str(e)}"

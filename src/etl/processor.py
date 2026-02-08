@@ -102,20 +102,47 @@ def process_all_files():
             if file_path.is_dir():
                 continue
 
-            # [关键修改] 使用相对于 data/raw 的路径作为书名
-            # as_posix() 确保在 Windows 上也能生成 "核心规则/玩家手册" 这样的正斜杠路径
             try:
-                relative_path = file_path.parent.relative_to(RAW_DATA_DIR)
-                source_book = relative_path.as_posix()
+                # 获取相对于 raw 的完整路径，例如 "核心规则/玩家手册2024/03_职业/野蛮人.htm"
+                relative_file_path = file_path.relative_to(RAW_DATA_DIR)
+                full_parts = relative_file_path.parts
 
-                # 如果文件直接在 raw 根目录下，relative_path 会是 "."
-                if source_book == ".":
+                # 分离目录部分
+                dir_parts = full_parts[:-1]
+
+                # 1. 计算 source_book (前两级目录)
+                if len(dir_parts) >= 2:
+                    source_book = f"{dir_parts[0]}/{dir_parts[1]}"
+                    book_depth = 2
+                elif len(dir_parts) == 1:
+                    source_book = dir_parts[0]
+                    book_depth = 1
+                else:
                     source_book = "Uncategorized"
-            except ValueError:
-                # 理论上不会发生，除非 file_path 不在 RAW_DATA_DIR 下
-                source_book = file_path.parent.name
+                    book_depth = 0
 
-            print(f"处理: {source_book} -> {file_path.name}")
+                # 2. 计算 chapter (剩余路径 + 文件名Stem)
+                # [核心修改] 逻辑：full_parts[book_depth:] 就是被 source_book 截断剩下的部分
+                # 例如：full_parts = ("核心规则", "玩家手册2024", "03_职业", "野蛮人.htm")
+                # source_book 占了前2个
+                # chapter_parts = ("03_职业", "野蛮人.htm")
+
+                chapter_parts = list(full_parts[book_depth:])
+
+                if chapter_parts:
+                    # 将最后一部分 (文件名) 替换为不带后缀的 Stem，如 "野蛮人.htm" -> "野蛮人"
+                    chapter_parts[-1] = file_path.stem
+                    # 用 "/" 拼接，变成 "03_职业/野蛮人"
+                    chapter = "/".join(chapter_parts)
+                else:
+                    chapter = file_path.stem
+
+            except ValueError:
+                source_book = "Unknown"
+                chapter = file_path.stem
+
+            # 调试打印 (可选)
+            print(f"Book: {source_book} | Chapter: {chapter}")
 
             try:
                 content = read_file_content(file_path)
@@ -123,8 +150,8 @@ def process_all_files():
                     continue
 
                 base_metadata = {
-                    "source_book": source_book,  # 例如: "核心规则/玩家手册2024"
-                    "chapter": file_path.stem,
+                    "source_book": source_book,
+                    "chapter": chapter,  # [修改点] 这里现在包含了完整的子路径信息
                     "filename": file_path.name,
                 }
 
