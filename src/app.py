@@ -4,10 +4,11 @@ import uuid
 from pathlib import Path
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
+import chromadb
 
 # --- [新增] 0. 网络代理配置 ---
-#os.environ["HTTP_PROXY"] = "http://127.0.0.1:7890"
-#os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7890"
+# os.environ["HTTP_PROXY"] = "http://127.0.0.1:7890"
+# os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7890"
 
 # --- 新增依赖 ---
 try:
@@ -23,35 +24,42 @@ sys.path.append(str(BASE_DIR))
 from src.agent.graph import graph
 
 
-# --- 2. 辅助函数：构建树形结构 ---
 @st.cache_data
 def get_book_tree_nodes():
     """
-    扫描 data/raw 目录，构建用于 tree_select 的节点结构
+    [核心修改]
+    不再扫描 data/raw (部署环境可能没有)，而是直接从 chroma_db_data 读取元数据。
+    这样能保证前端显示的目录与数据库实际内容完全一致。
     """
-    raw_dir = BASE_DIR / "data" / "raw"
-    if not raw_dir.exists():
+    db_dir = BASE_DIR / "chroma_db_data"
+
+    if not db_dir.exists():
+        # 如果连数据库都没有，说明完全没初始化
         return [], set()
 
     valid_books = set()
-    for file_path in raw_dir.rglob("**/*.htm*"):
-        if file_path.is_dir():
-            continue
-        try:
-            relative_path = file_path.parent.relative_to(raw_dir)
-            parts = relative_path.parts
 
-            if str(relative_path) == ".":
-                book_path = "Uncategorized"
-            elif len(parts) >= 2:
-                book_path = f"{parts[0]}/{parts[1]}"
-            else:
-                book_path = parts[0]
+    try:
+        # 1. 连接本地 ChromaDB
+        client = chromadb.PersistentClient(path=str(db_dir))
+        # 获取集合 (名称必须与 ingest.py 中一致，默认为 'dnd_rules')
+        collection = client.get_collection("dnd_rules")
 
-            valid_books.add(book_path)
-        except Exception:
-            continue
+        # 2. 获取所有数据的元数据 (只拿 metadata，速度很快)
+        # include=["metadatas"] 避免加载庞大的向量数据
+        result = collection.get(include=["metadatas"])
 
+        # 3. 提取唯一的 source_book 字段
+        for meta in result["metadatas"]:
+            if "source_book" in meta:
+                valid_books.add(meta["source_book"])
+
+    except Exception as e:
+        st.error(f"读取数据库目录失败: {e}")
+        return [], set()
+
+    # 4. 将扁平的 source_book 列表转换为嵌套字典树
+    # (后续逻辑保持不变，因为 source_book 的格式就是 'Category/Book')
     tree = {}
     for path in valid_books:
         parts = path.split("/")
