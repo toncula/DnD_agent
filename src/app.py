@@ -90,13 +90,6 @@ st.markdown(
     [data-testid="stSidebar"] {
         color: white !important;
     }
-    [data-testid="stSidebar"] iframe {
-        background-color: #ffffff !important;
-        border-radius: 8px;
-        padding: 10px;
-        margin-top: 10px;
-        filter: none !important;
-    }
     </style>
     """,
     unsafe_allow_html=True,
