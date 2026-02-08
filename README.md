@@ -36,12 +36,16 @@ ETL: BeautifulSoup4, Markdownify
 
 ### 创建并激活 Conda 环境
 
+```bash
 conda create -n dnd-agent python=3.11
 conda activate dnd-agent
+```
 
 ### 安装依赖
 
+```bash
 pip install -r requirements.txt
+```
 
 ### 配置环境变量
 
@@ -61,6 +65,7 @@ LANGSMITH_API_KEY="..."  (可选) 用于调试监控
 
 将 HTML 文件夹放入 data/raw/ 目录中。结构如下：
 
+```
 data/
 └── raw/
     ├── 核心规则/
@@ -68,12 +73,15 @@ data/
     │   └── 地下城主指南/
     └── 规则扩展/
         └── 萨娜萨的万事指南/
+```
 
 #### 步骤 B: 清洗数据
 
 运行清洗脚本，将 HTML 转换为结构化的 JSONL：
 
+```bash
 python src/etl/processor.py
+```
 
 输出：data/processed/dnd_knowledge_base.jsonl
 
@@ -81,7 +89,9 @@ python src/etl/processor.py
 
 将清洗后的数据写入 ChromaDB：
 
+```bash
 python src/db/ingest.py
+```
 
 输出：chroma_db_data/ 文件夹
 
@@ -89,12 +99,15 @@ python src/db/ingest.py
 
 运行 Streamlit 前端：
 
+```bash
 streamlit run src/app.py
+```
 
 浏览器将自动打开 <http://localhost:8501。>
 
 ## 📂 项目结构
 
+```
 dnd-agent/
 ├── .env                    # 环境变量 (不要提交到 Git)
 ├── chroma_db_data/         # 向量数据库本地存储
@@ -111,6 +124,7 @@ dnd-agent/
 │   │   └── processor.py    # 数据清洗脚本 (HTML -> Markdown)
 │   └── app.py              # Streamlit 前端应用
 └── requirements.txt        # 依赖列表
+```
 
 ## ⚠️ 常见问题
 
