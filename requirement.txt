@@ -1,0 +1,13 @@
+langchain
+langchain-core
+langchain-google-genai
+langchain-chroma
+langgraph
+chromadb
+beautifulsoup4
+markdownify
+python-dotenv
+tqdm
+streamlit
+streamlit-tree-select
+
