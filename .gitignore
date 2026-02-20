@@ -17,3 +17,12 @@ __pycache__/
 
 #数据库
 /data/raw
+
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
