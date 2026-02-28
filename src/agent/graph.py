@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Literal, TypedDict, Optional, Dict, Any
 
 from dotenv import load_dotenv
 
@@ -52,6 +52,8 @@ class AgentState(TypedDict):
 
     selected_books: list[str]  # 用户勾选的规则书 (从前端传入)
 
+    character_data: Optional[Dict[str, Any]]  # 人物卡数据
+
 
 # --- 2. 初始化模型与工具 ---
 
@@ -59,7 +61,10 @@ tools = [search_rules]
 
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3-flash-preview", temperature=0, max_retries=2  # 规则问题不需要太发散
+    model="gemini-3-flash-preview", 
+    temperature=0, 
+    max_retries=3,
+    timeout=60
 )
 
 
@@ -81,31 +86,26 @@ def reasoner(state: AgentState):
     # 从状态中获取用户选择的规则书
 
     books = state.get("selected_books", [])
+    character = state.get("character_data", {})
 
     messages = state["messages"]
 
     base_system_prompt = f"""你是一个精通 D&D 5E (龙与地下城) 中文规则的地下城主(DM)助手。
 
-    
+    **当前人物卡信息**:
+    {character if character else "暂未加载人物卡"}
 
     **当前环境限制**:
 
     用户仅允许你参考以下规则书: {books if books else '所有可用规则书'}。
 
-    
-
     **你的行动准则**:
-
-    1. **必须查书**: 遇到规则问题，必须调用 `search_rules` 工具检索，严禁仅凭记忆或臆造回答。
-
-    2. **参数传递**: 调用工具时，必须将上面的规则书列表准确传递给 `book_filter` 参数。
-
-    3. **具体胜过一般**: 如果检索结果中，职业特性/专长描述与通用战斗规则冲突，以具体的特性为准 (Specific Beats General)。
-
-    4. **引用来源**: 回答必须注明信息来源（例如：根据《玩家手册》第x章...）。
-
-    5. **诚实**: 如果查不到，就说查不到。
-
+    1. **参考人物卡**: 当用户问到关于“我”或当前角色时，请优先查看上面的**当前人物卡信息**。
+    2. **必须查书**: 遇到规则问题，必须调用 `search_rules` 工具检索，严禁仅凭记忆或臆造回答。
+    3. **参数传递**: 调用工具时，必须将上面的规则书列表准确传递给 `book_filter` 参数。
+    4. **具体胜过一般**: 如果检索结果中，职业特性/专长描述与通用战斗规则冲突，以具体的特性为准 (Specific Beats General)。
+    5. **引用来源**: 回答必须注明信息来源（例如：根据《玩家手册》第x章...）。
+    6. **诚实**: 如果查不到，就说查不到。
     """
 
     # --- [新增] 软性循环限制逻辑 (Soft Limit) ---

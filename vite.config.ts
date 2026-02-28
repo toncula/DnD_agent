@@ -1,24 +1,24 @@
-import tailwindcss from '@tailwindcss/vite';
+import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import tailwindcss from '@tailwindcss/vite'; // 这里必须引用 Tailwind v4 的插件
 import path from 'path';
-import {defineConfig, loadEnv} from 'vite';
 
-export default defineConfig(({mode}) => {
-  const env = loadEnv(mode, '.', '');
-  return {
-    plugins: [vue(), tailwindcss()],
-    define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+export default defineConfig({
+  plugins: [
+    vue(),
+    tailwindcss(), // 激活 Tailwind 处理
+  ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
     },
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, '.'),
-      },
+  },
+  server: {
+    port: 3000,
+    host: '0.0.0.0',
+    watch: {
+      // 继续保持对数据目录的忽略，防止后端保存触发全页刷新
+      ignored: ['**/data/**', '**/chroma_db_data/**', '**/__pycache__/**'],
     },
-    server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
-      hmr: process.env.DISABLE_HMR !== 'true',
-    },
-  };
+  },
 });

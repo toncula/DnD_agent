@@ -1,149 +1,68 @@
-# 🐉 D&D 5E 规则智能助手 (Agentic RAG)
+# D&D 5E 智能角色引擎 (DnD Agent)
 
-这是一个基于 Agentic RAG (代理式检索增强生成) 技术构建的龙与地下城 (D&D 5E) 规则问答智能体。
+这是一个结合了 **Google Gemini 3** 推理能力与 **Vite + Vue 3** 现代前端技术的龙与地下城 (D&D 5E) 数字化角色卡系统。它不仅提供了一个高度交互的角色面板，还集成了能够查阅多种规则书的 AI DM 顾问。
 
-目前临时部署的网页：<https://dnd-agent.onrender.com/>
+## 🚀 2026年2月重大更新
 
-不同于传统的关键词搜索或简单的 RAG，本智能体采用 LangGraph 构建了具备思考能力的 Agent。它能够理解复杂的规则问题，主动规划检索步骤，在多本规则书中查找信息，并进行逻辑推理（如计算法术伤害、比较职业特性），最终给出精准的中文规则解答。
+我们对系统进行了深度重构，带来了以下全新特性：
 
-## ✨ 核心特性
+### 1. 现代化交互式角色面板
+- **组件化重构**：将冗长的人物卡拆分为 `BioHeader` (身份)、`StatGrid` (属性)、`CombatStats` (战斗)、`SkillsSaves` (技能) 等多个独立模块。
+- **静默自动同步**：引入了类似 Excel 的**防抖自动保存**机制。修改数值 1.2 秒后自动同步至后端，并静默回填派生数值（如 AC、调整值等），无需手动保存。
+- **高密度 UI 布局**：针对跑团习惯优化了视觉层级，缩小了冗余间距，放大了核心战斗数值（HP、AC、先攻）。
+- **智能生命值管理**：采用 `当前 / 上限 + 临时` 的直观显示格式，内置**死亡豁免**记录模块。
+- **等级联动生命骰**：固定 20 级生命骰槽位，根据当前角色等级动态锁定/解锁编辑权限，并支持折叠隐藏。
 
-🧠 Agentic Workflow: 基于 LangGraph 的循环图结构，支持“思考-行动-观察”循环。如果第一次检索结果不满意，Agent 会自动尝试新的关键词。
+### 2. 增强型 AI 规则顾问
+- **模型升级**：全面接入最新的 **Gemini 3 Flash Preview** 模型，具备更强的逻辑推理和 Agent 协作能力。
+- **动态规则库**：侧边栏支持基于 `source_book` 路径（如 `核心/玩家手册`）自动构建无限层级的目录树，支持级联勾选。
+- **上下文感知**：AI 在回答时会优先参考您当前的人物卡状态，并根据您勾选的规则书范围进行精确检索。
 
-📚 多书目精准筛选: 前端提供类似 VS Code 的树形文件选择器，支持按文件夹（如“核心规则”）或单本书（如“玩家手册2024”）进行检索范围限制。
+---
 
-📖 结构化数据清洗: 专门针对 D&D HTML/CHM 源文件设计的 ETL 流水线，将 HTML 转换为 Markdown，完美保留表格和标题层级，大幅提升 LLM 理解能力。
+## 🛠️ 快速开始
 
-🔍 智能防死循环: 内置软性熔断机制和历史搜索记忆，防止 Agent 在检索不到内容时陷入无限循环。
+### 环境准备
+1.  **Python 3.9+**
+2.  **Node.js 18+**
+3.  **Google API Key**: 在 `.env` 文件中配置您的 `GOOGLE_API_KEY`。
 
-💎 Google Gemini 驱动: 全程使用 Gemini 3 flash preview (逻辑推理) 和 gemini Embedding 001 (向量化)，成本极低且上下文窗口巨大。
+### 1. 启动后端 (Python FastAPI)
+后端负责逻辑计算、向量数据库检索以及 JSON 数据的持久化。
 
-## 🛠️ 技术栈
-
-LLM: Google Gemini 3 flash preview
-
-Embedding: Google gemini Embedding 001
-
-Orchestration: LangChain, LangGraph
-
-Vector DB: ChromaDB
-
-Frontend: Streamlit + streamlit-tree-select
-
-ETL: BeautifulSoup4, Markdownify
-
-## 🚀 快速开始
-
-推荐使用 Python 3.10 或 3.11。
-
-### 创建并激活 Conda 环境
-
-```bash
-conda create -n dnd-agent python=3.11
-conda activate dnd-agent
-```
-
-### 安装依赖
-
-```bash
+```powershell
+# 安装 Python 依赖
 pip install -r requirements.txt
+
+# 启动服务 (默认监听 8000 端口)
+python src/api/server.py
+```
+*或者使用 uvicorn 开发模式：*
+`uvicorn src.api.server:app --reload`
+
+### 2. 启动前端 (Vite + Vue 3)
+前端提供极致流畅的交互体验和实时同步反馈。
+
+```powershell
+# 进入根目录安装 Node 依赖
+npm install
+
+# 启动开发服务器 (默认监听 3000 端口)
+npm run dev
 ```
 
-### 配置环境变量
+### 3. 访问系统
+在浏览器中打开：`http://localhost:3000/`
 
-在项目根目录创建 .env 文件，并填入您的 Google API Key：
+---
 
-GOOGLE_API_KEY="AIzaSy..."
+## 💡 使用技巧
+- **同步指示灯**：右上角会显示“同步中...”状态。当显示“已同步”并自动淡出时，表示您的数据已安全存入后端。
+- **隐藏侧边栏**：点击左上角的“面板”图标或侧边悬浮箭头，可以收起规则书库，获得更大的操作视野。
+- **召唤助手**：点击右上角“召唤助手”展开 AI 对话框，您可以问它：“以我现在的属性，跳远能跳多远？”
 
-LANGSMITH_API_KEY="..."  (可选) 用于调试监控
-
-### 数据准备 (ETL)
-
-本项目包含2026/2月版本的DND5e_chm的JSONL数据。如果您想使用最新的规则书版本或自定义内容，请按照以下步骤进行数据清洗和入库。
-
-您需要自行准备 D&D 5E 的 HTML 源文件（推荐使用 DND5e_chm 项目的源文件）。
-
-#### 步骤 A: 放置原始文件
-
-将 HTML 文件夹放入 data/raw/ 目录中。结构如下：
-
-```
-data/
-└── raw/
-    ├── 核心规则/
-    │   ├── 玩家手册2024/
-    │   └── 地下城主指南/
-    └── 规则扩展/
-        └── 萨娜萨的万事指南/
-```
-
-#### 步骤 B: 清洗数据
-
-运行清洗脚本，将 HTML 转换为结构化的 JSONL：
-
-```bash
-python src/etl/processor.py
-```
-
-输出：data/processed/dnd_knowledge_base.jsonl
-
-#### 步骤 C: 向量入库
-
-将清洗后的数据写入 ChromaDB：
-
-```bash
-python src/db/ingest.py
-```
-
-输出：chroma_db_data/ 文件夹
-
-### 启动应用
-
-运行 Streamlit 前端：
-
-```bash
-streamlit run src/app.py
-```
-
-浏览器将自动打开 <http://localhost:8501。>
-
-## 📂 项目结构
-
-```
-dnd-agent/
-├── .env                    # 环境变量 (不要提交到 Git)
-├── chroma_db_data/         # 向量数据库本地存储
-├── data/
-│   ├── raw/                # 原始 HTML 文件存放处
-│   └── processed/          # 清洗后的 JSONL 文件
-├── src/
-│   ├── agent/
-│   │   ├── graph.py        # Agent 核心逻辑 (LangGraph)
-│   │   └── tools.py        # 检索工具定义
-│   ├── db/
-│   │   └── ingest.py       # 向量入库脚本
-│   ├── etl/
-│   │   └── processor.py    # 数据清洗脚本 (HTML -> Markdown)
-│   └── app.py              # Streamlit 前端应用
-└── requirements.txt        # 依赖列表
-```
-
-## ⚠️ 常见问题
-
-Q: 遇到 Server disconnected 或 ConnectTimeout 错误？
-A: 这是因为 Python 脚本无法自动读取系统代理，导致连接 Google API 失败。
-请在 src/app.py 和 src/agent/graph.py 的顶部设置代理代码：
-
-Q: 搜索结果为空？
-A: 请检查左侧侧边栏是否勾选了正确的规则书。如果勾选了仍为空，可能是数据库元数据不匹配。请尝试删除 chroma_db_data 文件夹后重新运行 ETL 和入库脚本。
-
-Q: 表格显示乱码？
-A: 我们使用 Markdown 表格存储。Gemini 生成回答时通常会正确渲染 Markdown，但在某些情况下如果源 HTML 表格极其复杂，可能会有格式损失。
-
-## 🤝 贡献
-
-欢迎提交 Issue 或 Pull Request 来改进 Agent 的 Prompt 或数据清洗逻辑！
-
-## 📄 License
-
-GPL-3.0 License
+## 🗂️ 技术栈
+- **Frontend**: Vue 3, TypeScript, Vite, Tailwind CSS v4, Lucide Icons
+- **Backend**: FastAPI, Pydantic v2, LangChain, LangGraph
+- **AI/LLM**: Google Gemini 3 Flash Preview, Gemini Embeddings
+- **Database**: ChromaDB (Vector Store)

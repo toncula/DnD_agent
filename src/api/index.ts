@@ -2,8 +2,6 @@ import axios from 'axios';
 import type { BookTreeResponse, ChatRequest, ChatResponse } from '../types';
 
 // Create Axios instance with base URL
-// In a real app, this might come from import.meta.env.VITE_API_BASE_URL
-// For this demo, we default to localhost:8000 as per requirements
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
   headers: {
@@ -37,4 +35,30 @@ export default {
       throw error;
     }
   },
+
+  /**
+   * Fetch the current character sheet
+   */
+  async getCharacter(): Promise<any> {
+    try {
+      const response = await apiClient.get('/v1/character');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch character:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Save or update the character sheet
+   */
+  async updateCharacter(data: any): Promise<any> {
+    try {
+      const response = await apiClient.post('/v1/character', { data });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to update character:', error);
+      throw error;
+    }
+  }
 };

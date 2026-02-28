@@ -24,8 +24,10 @@ function getAllDescendantValues(node: BookNode): string[] {
 
 function handleToggleSelect(node: BookNode, currentSelected: string[]) {
   const newSelected = new Set(currentSelected);
-  const isSelected = newSelected.has(node.value);
   const descendantValues = getAllDescendantValues(node);
+  
+  // Check if the node itself is currently selected
+  const isSelected = currentSelected.includes(node.value);
 
   if (isSelected) {
     // Deselect node and all descendants

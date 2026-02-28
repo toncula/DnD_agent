@@ -28,4 +28,5 @@ export interface ChatRequest {
   messages: ChatMessage[];
   selected_books: string[];
   thread_id?: string;
+  character_data?: any;
 }

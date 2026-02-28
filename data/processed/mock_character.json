@@ -1,0 +1,340 @@
+{
+    "bio": {
+        "character_name": "加拉哈德",
+        "player_name": "玩家1",
+        "gender": "",
+        "age": 20,
+        "height": "",
+        "weight": "",
+        "alignment": "守序善良",
+        "faith": "",
+        "hometown": "",
+        "background_name": "民兵",
+        "backstory": "",
+        "personality": {
+            "traits": "",
+            "ideals": "",
+            "bonds": "",
+            "flaws": ""
+        }
+    },
+    "prog": {
+        "character_class": "战士",
+        "level": 3,
+        "classes": {
+            "战士": 3
+        },
+        "race": "人类",
+        "subrace": "",
+        "exp": 0
+    },
+    "strength": {
+        "base_score": 15,
+        "racial_bonus": 0,
+        "asi_bonus": 0,
+        "override": null,
+        "derived": 15,
+        "modifier": 2
+    },
+    "dexterity": {
+        "base_score": 18,
+        "racial_bonus": 0,
+        "asi_bonus": 0,
+        "override": null,
+        "derived": 18,
+        "modifier": 4
+    },
+    "constitution": {
+        "base_score": 18,
+        "racial_bonus": 0,
+        "asi_bonus": 0,
+        "override": null,
+        "derived": 18,
+        "modifier": 4
+    },
+    "intelligence": {
+        "base_score": 8,
+        "racial_bonus": 0,
+        "asi_bonus": 0,
+        "override": null,
+        "derived": 8,
+        "modifier": -1
+    },
+    "wisdom": {
+        "base_score": 14,
+        "racial_bonus": 0,
+        "asi_bonus": 0,
+        "override": null,
+        "derived": 14,
+        "modifier": 2
+    },
+    "charisma": {
+        "base_score": 13,
+        "racial_bonus": 0,
+        "asi_bonus": 0,
+        "override": null,
+        "derived": 13,
+        "modifier": 1
+    },
+    "str_save": {
+        "is_proficient": true,
+        "bonus": 0,
+        "override": null,
+        "derived": 4
+    },
+    "dex_save": {
+        "is_proficient": true,
+        "bonus": 0,
+        "override": null,
+        "derived": 6
+    },
+    "con_save": {
+        "is_proficient": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 4
+    },
+    "int_save": {
+        "is_proficient": false,
+        "bonus": 0,
+        "override": null,
+        "derived": -1
+    },
+    "wis_save": {
+        "is_proficient": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 2
+    },
+    "cha_save": {
+        "is_proficient": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 1
+    },
+    "athletics": {
+        "is_proficient": true,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 4
+    },
+    "acrobatics": {
+        "is_proficient": true,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 6
+    },
+    "sleight_of_hand": {
+        "is_proficient": true,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 6
+    },
+    "stealth": {
+        "is_proficient": true,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 6
+    },
+    "arcana": {
+        "is_proficient": true,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 1
+    },
+    "history": {
+        "is_proficient": false,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": -1
+    },
+    "investigation": {
+        "is_proficient": false,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": -1
+    },
+    "nature": {
+        "is_proficient": false,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": -1
+    },
+    "religion": {
+        "is_proficient": false,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": -1
+    },
+    "animal_handling": {
+        "is_proficient": true,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 4
+    },
+    "insight": {
+        "is_proficient": false,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 2
+    },
+    "medicine": {
+        "is_proficient": false,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 2
+    },
+    "perception": {
+        "is_proficient": true,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 4
+    },
+    "survival": {
+        "is_proficient": false,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 2
+    },
+    "deception": {
+        "is_proficient": false,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 1
+    },
+    "intimidation": {
+        "is_proficient": false,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 1
+    },
+    "performance": {
+        "is_proficient": false,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 1
+    },
+    "persuasion": {
+        "is_proficient": false,
+        "is_expertise": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 1
+    },
+    "combat": {
+        "hp_rolls": [
+            10,
+            10,
+            10
+        ],
+        "bonus_hp_per_level": 0,
+        "hp_max": 42,
+        "hp_current": 34,
+        "temp_hp": 0,
+        "hit_dice": {
+            "d10": {
+                "total": 3,
+                "expended": 0
+            }
+        },
+        "death_saves": {
+            "successes": 0,
+            "failures": 0
+        },
+        "armor_class": 18,
+        "initiative": 4,
+        "speed": 30,
+        "proficiency_bonus": 2
+    },
+    "equipped_armor_base_ac": 16,
+    "has_shield": true,
+    "weapons": [
+        {
+            "name": "长剑",
+            "damage_dice": "1d8",
+            "is_finesse": false,
+            "is_proficient": true,
+            "derived_attack_bonus": 4,
+            "derived_damage_bonus": 2
+        }
+    ],
+    "features": [],
+    "inventory": [],
+    "total_weight": 0,
+    "carrying_capacity": 225,
+    "spells": [],
+    "spellcasting": {
+        "ability": "wisdom",
+        "spell_save_dc": 12,
+        "spell_attack_bonus": 4,
+        "slots": {
+            "1": {
+                "max_slots": 0,
+                "expended": 0,
+                "override": null
+            },
+            "2": {
+                "max_slots": 0,
+                "expended": 0,
+                "override": null
+            },
+            "3": {
+                "max_slots": 0,
+                "expended": 0,
+                "override": null
+            },
+            "4": {
+                "max_slots": 0,
+                "expended": 0,
+                "override": null
+            },
+            "5": {
+                "max_slots": 0,
+                "expended": 0,
+                "override": null
+            },
+            "6": {
+                "max_slots": 0,
+                "expended": 0,
+                "override": null
+            },
+            "7": {
+                "max_slots": 0,
+                "expended": 0,
+                "override": null
+            },
+            "8": {
+                "max_slots": 0,
+                "expended": 0,
+                "override": null
+            },
+            "9": {
+                "max_slots": 0,
+                "expended": 0,
+                "override": null
+            }
+        },
+        "pact_magic": {
+            "level": 0,
+            "max_slots": 0,
+            "expended": 0
+        }
+    }
+}

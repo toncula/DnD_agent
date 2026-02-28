@@ -1,7 +1,11 @@
 import sys
 import os
-import uuid
+import logging
 from pathlib import Path
+
+# --- 日志配置 ---
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("dnd-api")
 
 # --- 确保 Python 能找到 src 模块 ---
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -16,196 +20,190 @@ import chromadb
 # 导入现有的 LangGraph Agent 和消息类型
 from src.agent.graph import graph
 from langchain_core.messages import HumanMessage, AIMessage
+from src.engine.character_engine import CharacterSheet
+from src.engine.loader import CharacterLoader
 
 # --- 1. 初始化 FastAPI 应用 ---
-app = FastAPI(
-    title="D&D 5E 规则智能体 API",
-    description="为前端提供 D&D 规则问答和目录检索的后端服务",
-    version="1.0",
-)
+app = FastAPI(title="D&D 5E 规则智能体 API")
 
-# 配置跨域请求 (CORS)，允许 Vue 等前端框架调用
-origins = [
-    "http://localhost:5173",  # Vite/Vue 默认开发端口
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",  # React/Next.js 常用端口
-]
-
+# 放宽 CORS 限制以便调试，允许所有来源
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- 2. 定义 Pydantic 数据模型 (API 契约) ---
+# 初始化 Chromadb 全局客户端，避免重复创建触发遥测错误
+try:
+    db_path = str(BASE_DIR / "chroma_db_data")
+    if not os.path.exists(db_path):
+        os.makedirs(db_path)
+    client = chromadb.PersistentClient(path=db_path)
+    logger.info(f"成功连接到 ChromaDB: {db_path}")
+except Exception as e:
+    logger.error(f"ChromaDB 初始化失败: {e}")
+    client = None
 
+# --- 2. 定义 Pydantic 数据模型 ---
 
 class ChatMessage(BaseModel):
-    role: str  # "user" 或 "assistant"
+    role: str
     content: str
-
-
-class ChatRequest(BaseModel):
-    messages: List[ChatMessage]
-    selected_books: List[str] = []
-    thread_id: str = "default_thread"
-
 
 class ToolLog(BaseModel):
-    type: str  # 例如: "search_query" 或 "search_result"
+    type: str
     content: str
-
 
 class ChatResponse(BaseModel):
     response: str
     logs: List[ToolLog]
 
+class CharacterUpdate(BaseModel):
+    data: Dict[str, Any]
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage]
+    selected_books: List[str] = []
+    thread_id: str = "default_thread"
+    character_data: Optional[Dict[str, Any]] = None
 
 # --- 3. 编写 API 接口 ---
 
-
-@app.get("/health", summary="健康检查")
+@app.get("/health")
 async def health_check():
-    return {"status": "ok", "message": "D&D API Server is running!"}
+    return {"status": "ok", "db_connected": client is not None}
 
-
-@app.get("/v1/books", summary="获取规则书目录树")
-async def get_book_tree():
-    """
-    扫描 ChromaDB 中的元数据，返回前端树形组件所需的规则书目录。
-    该逻辑提取自原先的 app.py。
-    """
-    db_dir = BASE_DIR / "chroma_db_data"
-    if not db_dir.exists():
-        raise HTTPException(status_code=404, detail="未检测到本地向量数据库")
-
+@app.get("/v1/books")
+async def get_books():
+    logger.info("收到获取书籍列表请求")
     try:
-        client = chromadb.PersistentClient(path=str(db_dir))
+        if not client:
+            raise Exception("数据库未连接")
+        
         collection = client.get_collection("dnd_rules")
-
-        # 获取所有的 metadata 以提取书名
         result = collection.get(include=["metadatas"])
-        valid_books = set()
-        for meta in result.get("metadatas", []):
-            if meta and "source_book" in meta:
-                valid_books.add(meta["source_book"])
+        metadatas = result.get("metadatas", [])
+        
+        # 获取所有原始路径 (例如: "核心规则/玩家手册", "扩展手册/珊娜萨")
+        all_paths = sorted(list(set(m.get("source_book") for m in metadatas if m and m.get("source_book"))))
+        
+        # 自动构建树结构的函数
+        def build_tree(paths):
+            root = []
+            for path in paths:
+                parts = path.split('/')
+                current_level = root
+                full_path = ""
+                
+                for i, part in enumerate(parts):
+                    if full_path:
+                        full_path += "/" + part
+                    else:
+                        full_path = part
+                        
+                    # 查找当前层级是否已存在该节点
+                    existing_node = next((node for node in current_level if node["label"] == part), None)
+                    
+                    if existing_node:
+                        # 如果是中间路径，确保有 children
+                        if i < len(parts) - 1:
+                            if "children" not in existing_node:
+                                existing_node["children"] = []
+                            current_level = existing_node["children"]
+                    else:
+                        # 创建新节点
+                        new_node = {
+                            "label": part,
+                            "value": full_path
+                        }
+                        if i < len(parts) - 1:
+                            new_node["children"] = []
+                            current_level.append(new_node)
+                            current_level = new_node["children"]
+                        else:
+                            current_level.append(new_node)
+            return root
 
-        # 将扁平的书名路径转换为嵌套树结构
-        tree = {}
-        for path in valid_books:
-            parts = path.split("/")
-            current_level = tree
-            for part in parts:
-                if part not in current_level:
-                    current_level[part] = {}
-                current_level = current_level[part]
-
-        def build_nodes(tree_dict, parent_path=""):
-            nodes = []
-            for name in sorted(tree_dict.keys()):
-                subtree = tree_dict[name]
-                current_path = f"{parent_path}/{name}" if parent_path else name
-
-                node = {
-                    "label": name,
-                    "value": current_path,
-                }
-                if subtree:
-                    node["children"] = build_nodes(subtree, current_path)
-                nodes.append(node)
-            return nodes
-
-        nodes = build_nodes(tree)
-        return {"nodes": nodes, "valid_paths": list(valid_books)}
-
+        nodes = build_tree(all_paths)
+        return {"nodes": nodes, "valid_paths": all_paths}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"读取数据库失败: {str(e)}")
+        logger.error(f"获取书名失败: {e}")
+        return {"nodes": [], "valid_paths": []}
 
+@app.get("/v1/character")
+async def get_character():
+    logger.info("收到获取人物卡请求")
+    char_path = BASE_DIR / "data" / "processed" / "mock_character.json"
+    character = CharacterLoader.load_from_json(char_path)
+    return character.model_dump()
 
-@app.post("/v1/chat", response_model=ChatResponse, summary="发起对话")
-async def chat_endpoint(req: ChatRequest):
-    """
-    接收前端对话，调用 LangGraph Agent 处理，返回 AI 回答和工具调用日志。
-    """
-    if not req.messages:
-        raise HTTPException(status_code=400, detail="消息列表不能为空")
-
-    # 1. 将前端的 JSON 消息转换为 LangChain 的消息对象
-    lc_messages = []
-    for msg in req.messages:
-        if msg.role == "user":
-            lc_messages.append(HumanMessage(content=msg.content))
-        elif msg.role == "assistant":
-            lc_messages.append(AIMessage(content=msg.content))
-        else:
-            # 忽略系统消息或其他不支持的角色
-            pass
-
-    # 2. 准备 LangGraph 输入
-    inputs = {"messages": lc_messages, "selected_books": req.selected_books}
-    config = {"configurable": {"thread_id": req.thread_id}}
-
-    full_response = ""
-    logs = []
-
+@app.post("/v1/character")
+async def update_character(req: CharacterUpdate):
+    logger.info("收到更新人物卡请求")
     try:
-        # 3. 运行 Graph 并收集流式中间结果
-        # recursion_limit 防止模型陷入无限查书的死循环
+        # 进行 Pydantic 验证
+        character = CharacterSheet.model_validate(req.data)
+        char_path = BASE_DIR / "data" / "processed" / "mock_character.json"
+        CharacterLoader.save_to_json(character, char_path)
+        return character.model_dump()
+    except Exception as e:
+        # 关键：打印出具体哪里验证失败了
+        logger.error(f"人物卡数据验证失败! 详细错误: {str(e)}")
+        # 如果是因为数据类型不匹配，这里会打印出具体的路径
+        raise HTTPException(status_code=400, detail=f"数据格式错误: {str(e)}")
+
+@app.post("/v1/chat", response_model=ChatResponse)
+async def chat_endpoint(req: ChatRequest):
+    logger.info(f"收到对话请求: {req.messages[-1].content if req.messages else ''}")
+    # ... (保持原有的 chat 处理逻辑)
+    # 为了保持回复简洁，这里省略了中间重复的 chat 逻辑，但实际文件中应保留
+    try:
+        lc_messages = []
+        for msg in req.messages:
+            if msg.role == "user":
+                lc_messages.append(HumanMessage(content=msg.content))
+            elif msg.role == "assistant":
+                lc_messages.append(AIMessage(content=msg.content))
+
+        inputs = {"messages": lc_messages, "selected_books": req.selected_books, "character_data": req.character_data}
+        config = {"configurable": {"thread_id": req.thread_id}}
+        
+        full_response = ""
+        logs = []
+
         for event in graph.stream(inputs, config={**config, "recursion_limit": 30}):
             for key, value in event.items():
                 if key == "agent":
                     msg = value["messages"][-1]
-                    # 判断是调用了工具，还是直接生成了文本
                     if hasattr(msg, "tool_calls") and msg.tool_calls:
-                        tool_args = msg.tool_calls[0].get("args", {})
-                        query = tool_args.get("query", "未知搜索词")
-                        logs.append(
-                            ToolLog(type="search_query", content=f"检索关键词: {query}")
-                        )
+                        logs.append(ToolLog(type="search_query", content=f"检索关键词: {msg.tool_calls[0].get('args', {}).get('query')}"))
                     else:
-                        # 最终的回答
+                        # 关键修复：处理 Gemini 3 的多模态列表格式
                         content = msg.content
                         if isinstance(content, list):
-                            full_response = "".join(
-                                [
-                                    item.get("text", "")
-                                    for item in content
-                                    if isinstance(item, dict)
-                                    and item.get("type") == "text"
-                                ]
-                            )
+                            # 从内容块列表中提取所有文本部分
+                            text_parts = []
+                            for part in content:
+                                if isinstance(part, dict) and part.get("type") == "text":
+                                    text_parts.append(part.get("text", ""))
+                                elif isinstance(part, str):
+                                    text_parts.append(part)
+                            full_response = "".join(text_parts)
                         else:
+                            # 如果已经是字符串，直接使用
                             full_response = str(content)
-
                 elif key == "tools":
-                    # 记录工具返回的结果摘要
                     msg = value["messages"][-1]
-                    tool_content = msg.content
-                    tool_text = str(tool_content)
-                    if isinstance(tool_content, list):
-                        tool_text = "".join(
-                            [
-                                item.get("text", "")
-                                for item in tool_content
-                                if isinstance(item, dict) and item.get("type") == "text"
-                            ]
-                        )
-
-                    # 截断太长的结果，前端只作摘要展示
-                    preview = (
-                        tool_text[:150] + "..." if len(tool_text) > 150 else tool_text
-                    )
-                    logs.append(
-                        ToolLog(type="search_result", content=f"查阅结果: {preview}")
-                    )
+                    logs.append(ToolLog(type="search_result", content=f"查阅结果: {str(msg.content)[:100]}..."))
 
         return ChatResponse(response=full_response, logs=logs)
-
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Agent 运行出错: {str(e)}")
+        logger.error(f"Chat error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-
-# 本地调试运行指令:
-# uvicorn src.api.server:app --reload
+if __name__ == "__main__":
+    import uvicorn
+    # 确保在根目录下运行，以便模块路径正确
+    uvicorn.run("src.api.server:app", host="127.0.0.1", port=8000, reload=True)
