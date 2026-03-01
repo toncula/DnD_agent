@@ -26,3 +26,8 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# 测试与临时脚本
+list_models.py
+repro_issue.py
+test_*.py
