@@ -19,6 +19,30 @@ onMounted(async () => {
   try {
     const books = await api.getBooks();
     bookNodes.value = books.nodes;
+    
+    // 自动勾选核心规则，战役设定和规则扩展
+    const targetCategories = ['核心规则', '战役设定', '规则扩展'];
+    const autoSelected = new Set<string>();
+    
+    const collectValues = (nodes: BookNode[]) => {
+      nodes.forEach(node => {
+        autoSelected.add(node.value);
+        if (node.children) {
+          collectValues(node.children);
+        }
+      });
+    };
+    
+    books.nodes.forEach(node => {
+      if (targetCategories.includes(node.label)) {
+        autoSelected.add(node.value);
+        if (node.children) {
+          collectValues(node.children);
+        }
+      }
+    });
+    selectedBooks.value = Array.from(autoSelected);
+
     const char = await api.getCharacter();
     characterData.value = char;
   } catch (error) {
@@ -37,6 +61,11 @@ const saveCharacter = async (newData: any) => {
 };
 
 async function handleSendMessage(content: string) {
+  if (selectedBooks.value.length === 0) {
+    messages.value.push({ role: 'assistant', content: '发送失败：请先在左侧选择至少一本规则书。', logs: [] });
+    return;
+  }
+
   messages.value.push({ role: 'user', content });
   isLoading.value = true;
   try {

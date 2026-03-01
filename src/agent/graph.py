@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 
 import sys
 import os
-#os.environ["HTTP_PROXY"] = "http://127.0.0.1:7890"
-#os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7890"
+# os.environ["HTTP_PROXY"] = "http://127.0.0.1:7890"
+# os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7890"
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[2]))
