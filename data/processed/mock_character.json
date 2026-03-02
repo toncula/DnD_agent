@@ -1,64 +1,64 @@
 {
     "bio": {
-        "character_name": "加拉哈德",
-        "player_name": "玩家1",
+        "character_name": "未命名英雄",
+        "player_name": "",
         "gender": "",
         "age": 20,
         "height": "",
         "weight": "",
-        "alignment": "守序善良",
+        "alignment": "绝对中立",
         "faith": "",
         "hometown": "",
-        "background_name": "民兵",
+        "background_name": "",
         "backstory": "",
         "personality": {
             "traits": "",
             "ideals": "",
             "bonds": "",
             "flaws": ""
-        }
+        },
+        "languages": [],
+        "tool_proficiencies": []
     },
     "prog": {
         "character_class": "战士",
-        "level": 3,
-        "classes": {
-            "战士": 3
-        },
+        "level": 2,
+        "classes": [],
         "race": "人类",
         "subrace": "",
         "exp": 0
     },
     "strength": {
-        "base_score": 15,
+        "base_score": 10,
         "racial_bonus": 0,
         "asi_bonus": 0,
         "override": null,
-        "derived": 15,
-        "modifier": 2
+        "derived": 10,
+        "modifier": 0
     },
     "dexterity": {
-        "base_score": 18,
+        "base_score": 10,
         "racial_bonus": 0,
         "asi_bonus": 0,
         "override": null,
-        "derived": 18,
-        "modifier": 4
+        "derived": 10,
+        "modifier": 0
     },
     "constitution": {
-        "base_score": 18,
+        "base_score": 16,
         "racial_bonus": 0,
         "asi_bonus": 0,
         "override": null,
-        "derived": 18,
-        "modifier": 4
+        "derived": 16,
+        "modifier": 3
     },
     "intelligence": {
-        "base_score": 8,
+        "base_score": 17,
         "racial_bonus": 0,
         "asi_bonus": 0,
         "override": null,
-        "derived": 8,
-        "modifier": -1
+        "derived": 17,
+        "modifier": 3
     },
     "wisdom": {
         "base_score": 14,
@@ -69,36 +69,36 @@
         "modifier": 2
     },
     "charisma": {
-        "base_score": 13,
+        "base_score": 10,
         "racial_bonus": 0,
         "asi_bonus": 0,
         "override": null,
-        "derived": 13,
-        "modifier": 1
+        "derived": 10,
+        "modifier": 0
     },
     "str_save": {
-        "is_proficient": true,
-        "bonus": 0,
-        "override": null,
-        "derived": 4
-    },
-    "dex_save": {
-        "is_proficient": true,
-        "bonus": 0,
-        "override": null,
-        "derived": 6
-    },
-    "con_save": {
         "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": 4
+        "derived": 0
+    },
+    "dex_save": {
+        "is_proficient": false,
+        "bonus": 0,
+        "override": null,
+        "derived": 0
+    },
+    "con_save": {
+        "is_proficient": true,
+        "bonus": 0,
+        "override": null,
+        "derived": 5
     },
     "int_save": {
         "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": -1
+        "derived": 3
     },
     "wis_save": {
         "is_proficient": false,
@@ -110,77 +110,77 @@
         "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": 1
+        "derived": 0
     },
     "athletics": {
-        "is_proficient": true,
+        "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 4
+        "derived": 0
     },
     "acrobatics": {
-        "is_proficient": true,
+        "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 6
+        "derived": 0
     },
     "sleight_of_hand": {
-        "is_proficient": true,
+        "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 6
+        "derived": 0
     },
     "stealth": {
-        "is_proficient": true,
+        "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 6
+        "derived": 0
     },
     "arcana": {
-        "is_proficient": true,
+        "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 1
+        "derived": 3
     },
     "history": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": -1
+        "derived": 3
     },
     "investigation": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": -1
+        "derived": 3
     },
     "nature": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": -1
+        "derived": 3
     },
     "religion": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": -1
+        "derived": 3
     },
     "animal_handling": {
-        "is_proficient": true,
+        "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 4
+        "derived": 2
     },
     "insight": {
         "is_proficient": false,
@@ -197,11 +197,11 @@
         "derived": 2
     },
     "perception": {
-        "is_proficient": true,
+        "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 4
+        "derived": 2
     },
     "survival": {
         "is_proficient": false,
@@ -215,42 +215,42 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 1
+        "derived": 0
     },
     "intimidation": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 1
+        "derived": 0
     },
     "performance": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 1
+        "derived": 0
     },
     "persuasion": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 1
+        "derived": 0
     },
     "combat": {
         "hp_rolls": [
-            10,
-            10,
-            10
+            8,
+            8
         ],
         "bonus_hp_per_level": 0,
-        "hp_max": 42,
-        "hp_current": 34,
+        "hp_max": 22,
+        "hp_current": 0,
         "temp_hp": 0,
+        "class_resources": [],
         "hit_dice": {
             "d10": {
-                "total": 3,
+                "total": 2,
                 "expended": 0
             }
         },
@@ -258,28 +258,32 @@
             "successes": 0,
             "failures": 0
         },
-        "armor_class": 18,
-        "initiative": 4,
+        "armor_class": 10,
+        "initiative": 0,
         "speed": 30,
         "proficiency_bonus": 2
     },
-    "equipped_armor_base_ac": 16,
-    "has_shield": true,
-    "weapons": [
-        {
-            "name": "长剑",
-            "damage_dice": "1d8",
-            "is_finesse": false,
-            "is_proficient": true,
-            "derived_attack_bonus": 4,
-            "derived_damage_bonus": 2
-        }
-    ],
+    "equipped_armor_base_ac": 0,
+    "has_shield": false,
+    "weapons": [],
     "features": [],
     "inventory": [],
     "total_weight": 0,
-    "carrying_capacity": 225,
-    "spells": [],
+    "carrying_capacity": 150,
+    "spells": [
+        {
+            "name": "新法术",
+            "level": 1,
+            "school": "塑能系",
+            "is_prepared": true,
+            "casting_time": "1动作",
+            "range": "60尺",
+            "components": "V, S",
+            "materials": "",
+            "duration": "即时",
+            "description": "法术说明..."
+        }
+    ],
     "spellcasting": {
         "ability": "wisdom",
         "spell_save_dc": 12,

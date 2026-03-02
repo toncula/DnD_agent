@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { CheckSquare, Square } from 'lucide-vue-next';
+import { CheckSquare, Square, Edit2 } from 'lucide-vue-next';
+import { ref } from 'vue';
 
 const props = defineProps<{
-  // 传入包含属性和豁免数据的对象
   sheet: any;
 }>();
 
 const emit = defineEmits(['update']);
+
+// 记录当前正在编辑哪一项的基础值
+const editingKey = ref<string | null>(null);
 
 const statMapping = [
   { key: 'strength', saveKey: 'str_save', label: '力量', short: '力' },
@@ -19,7 +22,8 @@ const statMapping = [
 
 const updateValue = (key: string, field: string, value: any) => {
   const newData = { ...props.sheet };
-  newData[key][field] = value;
+  const numVal = parseInt(value) || 0;
+  newData[key][field] = numVal;
   emit('update', newData);
 };
 
@@ -31,51 +35,72 @@ const toggleSaveProficiency = (saveKey: string) => {
 </script>
 
 <template>
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+  <div class="flex flex-col gap-2 w-full min-w-0">
     <div 
       v-for="item in statMapping" 
       :key="item.key"
-      class="bg-zinc-800/80 border border-zinc-700/50 rounded-2xl p-3 flex flex-col items-center relative shadow-lg group hover:border-red-500/50 transition-all"
+      class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-3 flex flex-col relative shadow-lg hover:border-zinc-600 transition-all"
     >
-      <!-- 豁免熟练勾选 (左上角) -->
-      <button 
-        @click="toggleSaveProficiency(item.saveKey)"
-        class="absolute top-2 left-2 text-zinc-600 hover:text-red-500 transition-colors"
-        title="豁免熟练"
-      >
-        <CheckSquare v-if="sheet[item.saveKey].is_proficient" class="w-3.5 h-3.5 text-red-500" />
-        <Square v-else class="w-3.5 h-3.5" />
-      </button>
+      <div class="flex items-center justify-between">
+        <!-- 左侧：熟练勾选与名称 -->
+        <div class="flex items-center gap-3">
+          <button 
+            @click.stop="toggleSaveProficiency(item.saveKey)"
+            class="z-10 p-1 -ml-1 text-zinc-700 hover:text-red-500 transition-colors"
+            title="切换豁免熟练度"
+          >
+            <CheckSquare v-if="sheet[item.saveKey].is_proficient" class="w-4 h-4 text-red-500" />
+            <Square v-else class="w-4 h-4" />
+          </button>
+          <div class="flex flex-col">
+            <span class="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1">{{ item.label }}</span>
+            <span class="text-[9px] font-black" :class="sheet[item.saveKey].is_proficient ? 'text-red-400' : 'text-zinc-600'">
+              豁免 {{ sheet[item.saveKey].derived >= 0 ? '+' : '' }}{{ sheet[item.saveKey].derived }}
+            </span>
+          </div>
+        </div>
 
-      <!-- 属性缩写 (右上角) -->
-      <span class="absolute top-2 right-2 text-sm font-black text-zinc-500 tracking-tighter bg-zinc-900/50 px-1.5 py-0.5 rounded border border-zinc-700/30 leading-none">{{ item.short }}</span>
-
-      <!-- 核心调整值 (大字) -->
-      <div class="mt-2 text-4xl font-black text-white leading-none tracking-tighter">
-        {{ sheet[item.key].modifier >= 0 ? '+' : '' }}{{ sheet[item.key].modifier }}
-      </div>
-      
-      <!-- 最终属性值 (圈) -->
-      <div class="mt-2 mb-3 px-4 py-1 bg-zinc-900 border border-zinc-700 rounded-full text-sm font-black text-zinc-300 shadow-inner">
-        {{ sheet[item.key].derived }}
-      </div>
-
-      <!-- 底部：豁免判定加值 -->
-      <div class="w-full pt-2 border-t border-zinc-700/50 flex flex-col items-center gap-0.5">
-        <span class="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">豁免判定</span>
-        <div class="text-sm font-black" :class="sheet[item.saveKey].is_proficient ? 'text-red-400' : 'text-zinc-300'">
-          {{ sheet[item.saveKey].derived >= 0 ? '+' : '' }}{{ sheet[item.saveKey].derived }}
+        <!-- 右侧：数值展示 -->
+        <div class="flex items-center gap-3 cursor-pointer" @click="editingKey = editingKey === item.key ? null : item.key">
+          <div class="flex flex-col items-end">
+            <span class="text-2xl font-black text-white leading-none tracking-tighter">
+              {{ sheet[item.key].modifier >= 0 ? '+' : '' }}{{ sheet[item.key].modifier }}
+            </span>
+            <span class="text-[10px] font-bold text-zinc-600 mt-0.5">{{ sheet[item.key].derived }}</span>
+          </div>
+          <Edit2 class="w-3 h-3 text-zinc-700" />
         </div>
       </div>
 
-      <!-- 悬浮编辑基础值 -->
-      <div class="mt-2 w-full opacity-0 group-hover:opacity-100 transition-opacity">
-        <input 
-          type="number" 
-          :value="sheet[item.key].base_score"
-          @input="e => updateValue(item.key, 'base_score', parseInt((e.target as HTMLInputElement).value))"
-          class="w-full bg-zinc-950 border border-zinc-700 rounded text-center text-[10px] py-0.5 text-zinc-500 focus:text-red-400 focus:border-red-500 outline-none"
-        />
+      <!-- 下拉编辑区 (点击数值后展开，不再使用悬浮遮挡) -->
+      <div v-if="editingKey === item.key" class="mt-3 pt-3 border-t border-zinc-800 flex gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+         <div class="flex-1 flex flex-col gap-1">
+           <span class="text-[8px] text-zinc-600 uppercase font-black">基础值</span>
+           <input 
+            type="number" 
+            :value="sheet[item.key].base_score"
+            @input="e => updateValue(item.key, 'base_score', (e.target as HTMLInputElement).value)"
+            class="w-full bg-zinc-950 border border-zinc-700 rounded text-center text-xs py-1 text-white focus:border-amber-500 outline-none"
+          />
+         </div>
+         <div class="flex-1 flex flex-col gap-1">
+           <span class="text-[8px] text-blue-500 uppercase font-black">临时加值</span>
+           <input 
+            type="number" 
+            :value="sheet[item.key].bonus"
+            @input="e => updateValue(item.key, 'bonus', (e.target as HTMLInputElement).value)"
+            class="w-full bg-zinc-950 border border-blue-900/50 rounded text-center text-xs py-1 text-blue-400 focus:border-blue-500 outline-none"
+          />
+         </div>
+         <div class="flex-1 flex flex-col gap-1">
+           <span class="text-[8px] text-emerald-500 uppercase font-black">豁免修正</span>
+           <input 
+            type="number" 
+            :value="sheet[item.saveKey].bonus"
+            @input="e => updateValue(item.saveKey, 'bonus', (e.target as HTMLInputElement).value)"
+            class="w-full bg-zinc-950 border border-emerald-900/50 rounded text-center text-xs py-1 text-emerald-400 focus:border-emerald-500 outline-none"
+          />
+         </div>
       </div>
     </div>
   </div>

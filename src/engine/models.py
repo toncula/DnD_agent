@@ -26,6 +26,8 @@ class Biography(BaseModel):
     background_name: str = Field(default="", description="背景来源(如:农民)")
     backstory: str = Field(default="", description="完整的背景故事")
     personality: Personality = Field(default_factory=Personality)
+    languages: list[str] = Field(default_factory=list, description="语言熟练项")
+    tool_proficiencies: list[str] = Field(default_factory=list, description="工具熟练项")
 
 
 # ==========================================
@@ -33,12 +35,20 @@ class Biography(BaseModel):
 # ==========================================
 
 
-class Progression(BaseModel):
-    character_class: str = Field(default="战士", description="主职业")
+class ClassInfo(BaseModel):
+    """单个职业的信息"""
+    name: str = Field(..., description="职业名称")
     level: int = Field(default=1, ge=1, le=20)
-    classes: dict[str, int] = Field(
-        default_factory=dict,
-        description="兼职职业及等级字典，例如 {'德鲁伊': 1, '法师': 2}",
+    subclass: str = Field(default="", description="子职业/范型")
+    is_primary: bool = Field(default=False, description="是否为起始职业(影响豁免熟练)")
+    hit_die: str = Field(default="d8", description="生命骰类型")
+
+class Progression(BaseModel):
+    character_class: str = Field(default="战士", description="主职业显示名")
+    level: int = Field(default=1, ge=1, le=20, description="总等级")
+    classes: list[ClassInfo] = Field(
+        default_factory=list,
+        description="职业列表，例如 [{'name': '战士', 'level': 2, 'is_primary': True}]",
     )
     race: str = Field(default="人类")
     subrace: str = Field(default="")
@@ -96,17 +106,30 @@ class HitDiceSlot(BaseModel):
     expended: int = Field(default=0, description="已消耗的该类生命骰数量")
 
 
+class ClassResource(BaseModel):
+    """职业特殊资源 (如诗人激励, 气点, 荒野变形)"""
+    name: str = Field(..., description="资源名称")
+    current: int = Field(default=0)
+    max: int = Field(default=0)
+    reset_on: str = Field(default="长休", description="恢复周期: 短休, 长休")
+
 class CombatStats(BaseModel):
     # --- 生命值系统 ---
     hp_rolls: list[int] = Field(
         default_factory=list, description="用户填写的每级生命骰掷骰结果，如 [10, 6, 8]"
     )
     bonus_hp_per_level: int = Field(
-        default=0, description="每级额外生命加值 (如丘陵矮人特性+1，健壮专长+2)"
+        default=0, description="每级额外生命加值"
     )
-    hp_max: int = Field(default=0, description="生命上限 (引擎自动计算)")
-    hp_current: int = Field(default=0, description="当前生命值")
-    temp_hp: int = Field(default=0, description="临时生命值")
+    hp_max: int = Field(default=0)
+    hp_current: int = Field(default=0)
+    temp_hp: int = Field(default=0)
+
+    # --- 职业资源 ---
+    class_resources: list[ClassResource] = Field(
+        default_factory=list,
+        description="特殊资源列表"
+    )
 
     # --- 短休与濒死 ---
     hit_dice: dict[str, HitDiceSlot] = Field(
@@ -152,6 +175,10 @@ class InventoryItem(BaseModel):
     name: str = Field(..., description="物品名称")
     quantity: int = Field(default=1, description="数量")
     weight: float = Field(default=0.0, description="单件重量(磅)")
+    category: str = Field(default="杂物", description="顶级类别: 装备, 消耗品, 杂物")
+    item_type: str = Field(default="", description="子类别: 武器, 护甲, 盾牌, 饰品")
+    slot_type: str = Field(default="", description="装备槽位: 头部, 躯干, 主手, 副手, 双手, 足部, 戒指, 项链")
+    is_equipped: bool = Field(default=False, description="是否已装备")
     description: str = Field(default="", description="描述")
 
 
@@ -161,13 +188,20 @@ class InventoryItem(BaseModel):
 
 
 class Spell(BaseModel):
-    """单一法术属性"""
+    """标准化法术属性 (5E 规则)"""
 
     name: str = Field(..., description="法术名称")
     level: int = Field(default=0, description="法术环阶，0为戏法")
+    school: str = Field(default="塑能系", description="法术系别: 防护, 咒法, 预言, 惑控, 塑能, 幻术, 死灵, 变化")
     is_prepared: bool = Field(default=False, description="是否已准备")
+    is_always_prepared: bool = Field(default=False, description="是否为恒定准备(不计入限额)")
+    override_ability: Optional[str] = Field(default=None, description="覆盖施法属性(如物品赋予)")
     casting_time: str = Field(default="1动作", description="施法时间")
-    description: str = Field(default="", description="法术效果简介")
+    range: str = Field(default="自身", description="施法距离")
+    components: str = Field(default="V, S", description="法术成分 (言语, 姿态, 材料)")
+    materials: str = Field(default="", description="法术材料描述")
+    duration: str = Field(default="即时", description="持续时间")
+    description: str = Field(default="", description="完整的法术说明")
 
 
 class SpellSlot(BaseModel):

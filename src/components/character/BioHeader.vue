@@ -57,31 +57,29 @@ const updateProg = (field: string, value: string | number) => {
         </div>
       </div>
 
-      <!-- 职业与等级 -->
+      <!-- 职业与等级 (由系统锁定) -->
       <div class="flex-1 min-w-[250px] flex flex-col gap-4">
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs text-zinc-500 font-black uppercase tracking-widest px-1">主要职业</label>
+          <label class="text-xs text-zinc-500 font-black uppercase tracking-widest px-1">主要职业 (锁定)</label>
           <div class="relative group">
-            <Shield class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-red-500 transition-colors" />
-            <input 
-              :value="prog.character_class"
-              @input="e => updateProg('character_class', (e.target as HTMLInputElement).value)"
-              class="w-full bg-zinc-900 border border-zinc-700 rounded-xl pl-11 pr-4 py-3 text-2xl font-black focus:ring-2 focus:ring-red-500/50 outline-none transition-all"
-            />
+            <Shield class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-700" />
+            <div class="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl pl-11 pr-4 py-3 text-2xl font-black text-zinc-400 cursor-not-allowed">
+              {{ prog.character_class }}
+            </div>
+            <div class="absolute right-3 top-1/2 -translate-y-1/2">
+              <Lock class="w-4 h-4 text-zinc-800" />
+            </div>
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
-            <label class="text-[11px] text-zinc-500 font-bold uppercase tracking-wider px-1">等级 (1-20)</label>
-            <div class="relative group">
-              <TrendingUp class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-red-500 transition-colors" />
-              <input 
-                type="number"
-                :value="prog.level"
-                @input="e => updateProg('level', parseInt((e.target as HTMLInputElement).value))"
-                class="w-full bg-zinc-900 border border-zinc-700 rounded-lg pl-10 pr-4 py-2 text-lg font-black focus:ring-2 focus:ring-red-500/50 outline-none"
-              />
+            <label class="text-[11px] text-zinc-500 font-bold uppercase tracking-wider px-1">总等级</label>
+            <div class="relative">
+              <TrendingUp class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-700" />
+              <div class="w-full bg-zinc-950/50 border border-zinc-800 rounded-lg pl-11 pr-4 py-2 text-lg font-black text-zinc-400 cursor-not-allowed">
+                {{ prog.level }}
+              </div>
             </div>
           </div>
           <div class="flex flex-col gap-1.5">
