@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Settings2, Clock, MapPin } from 'lucide-vue-next';
+import { Settings2, Clock } from 'lucide-vue-next';
 import SpellSlotTracker from './SpellSlotTracker.vue';
 import SpellPreparationDrawer from './SpellPreparationDrawer.vue';
 
@@ -13,22 +13,18 @@ const emit = defineEmits(['update', 'hover-item', 'update:sheet']);
 
 const showSelector = ref(false);
 
-// 全局施法属性
 const globalAbility = computed(() => props.sheet.spellcasting?.ability || 'intelligence');
 
-// 获取已准备列表（包含戏法和恒定准备）
 const preparedSpells = computed(() => {
   return (props.spells || []).filter(s => s.is_prepared || s.level === 0 || s.is_always_prepared);
 });
 
-// 计算准备限额 (不含恒定准备)
 const prepLimit = computed(() => {
   const mod = props.sheet[globalAbility.value]?.modifier || 0;
   const level = props.sheet.prog?.level || 1;
   return Math.max(1, level + mod);
 });
 
-// 当前常规准备数量 (过滤掉戏法和恒定准备)
 const preparedCount = computed(() => {
   return props.spells.filter(s => s.level > 0 && s.is_prepared && !s.is_always_prepared).length;
 });
@@ -42,7 +38,6 @@ const setGlobalAbility = (ability: string) => {
   emit('update:sheet', { spellcasting: newSpellcasting });
 };
 
-// 计算单个法术的 DC
 const calculateDC = (spell: any) => {
   const pb = props.sheet.combat?.proficiency_bonus || 2;
   const abilityKey = spell.override_ability || globalAbility.value;
@@ -62,11 +57,10 @@ const handleHover = (item: any, event: MouseEvent) => {
 
 <template>
   <div class="space-y-4">
-    <!-- 施法设置与限额 -->
     <div class="bg-zinc-950/50 border border-zinc-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-6 shadow-inner">
       <div class="flex items-center gap-6">
         <div class="flex flex-col gap-1.5">
-          <span class="text-[9px] font-black text-zinc-600 uppercase tracking-widest px-1">全局施法属性</span>
+          <span class="text-[9px] font-black text-zinc-600 uppercase tracking-widest px-1">全局属性</span>
           <div class="flex bg-zinc-900 p-1 rounded-xl border border-zinc-800">
             <button 
               v-for="a in [{id:'intelligence', label:'智'}, {id:'wisdom', label:'感'}, {id:'charisma', label:'魅'}]" 
@@ -81,7 +75,7 @@ const handleHover = (item: any, event: MouseEvent) => {
         </div>
         <div class="h-10 w-px bg-zinc-800 mx-2"></div>
         <div class="flex flex-col">
-          <span class="text-[9px] font-black text-zinc-500 uppercase tracking-widest">常规限额</span>
+          <span class="text-[9px] font-black text-zinc-500 uppercase tracking-widest">准备额度</span>
           <div class="flex items-center gap-2 mt-1">
             <span class="text-xl font-black" :class="preparedCount > prepLimit ? 'text-red-500' : 'text-zinc-100'">{{ preparedCount }}</span>
             <span class="text-zinc-600 text-sm">/ {{ prepLimit }}</span>
@@ -90,14 +84,12 @@ const handleHover = (item: any, event: MouseEvent) => {
       </div>
 
       <button @click="showSelector = true" class="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 px-5 py-2.5 rounded-xl border border-zinc-700 text-xs font-bold transition-all shadow-lg active:scale-95">
-        <Settings2 class="w-4 h-4 text-blue-400" /> 调整准备列表
+        <Settings2 class="w-4 h-4 text-blue-400" /> 调整准备
       </button>
     </div>
 
-    <!-- 法术位 -->
     <SpellSlotTracker :sheet="sheet" @update:sheet="v => emit('update:sheet', v)" />
 
-    <!-- 已准备列表 (按环阶显示) -->
     <div class="space-y-6">
       <div v-for="lv in 10" :key="lv-1">
         <template v-if="preparedSpells.filter(s => s.level === (lv-1)).length > 0">
@@ -112,7 +104,6 @@ const handleHover = (item: any, event: MouseEvent) => {
               @mouseleave="handleHover(null, null as any)"
               class="bg-zinc-900/60 p-3 rounded-xl border border-zinc-800 hover:border-blue-500/40 transition-all cursor-help flex justify-between items-center group relative overflow-hidden"
             >
-              <!-- 恒定准备标识线 -->
               <div v-if="spell.is_always_prepared" class="absolute top-0 left-0 w-1 h-full bg-amber-500/50"></div>
 
               <div class="flex flex-col flex-1 min-w-0">
@@ -128,7 +119,6 @@ const handleHover = (item: any, event: MouseEvent) => {
                 </div>
               </div>
 
-              <!-- 独立 DC 展示 -->
               <div class="flex flex-col items-center justify-center pl-3 ml-3 border-l border-zinc-800 shrink-0 min-w-[40px]">
                 <span class="text-[8px] font-black text-zinc-600 uppercase leading-none mb-1">DC</span>
                 <span class="text-lg font-black leading-none" :class="spell.override_ability ? 'text-blue-400' : 'text-zinc-400'">
@@ -141,7 +131,6 @@ const handleHover = (item: any, event: MouseEvent) => {
       </div>
     </div>
 
-    <!-- 整备抽屉组件 -->
     <SpellPreparationDrawer 
       :show="showSelector"
       :spells="spells"

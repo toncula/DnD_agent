@@ -75,6 +75,7 @@ class StatField(BaseModel):
     override: Optional[int] = Field(default=None, description="修正值 (强制锁定值)")
     derived: int = Field(default=10, description="最终计算结果")
     modifier: int = Field(default=0, description="属性调整值")
+    adv_state: int = Field(default=0, description="优势状态: 1优势, -1劣势, 0正常")
 
 
 class SkillField(BaseModel):
@@ -83,6 +84,7 @@ class SkillField(BaseModel):
     bonus: int = Field(default=0, description="临时修正值")
     override: Optional[int] = Field(default=None)
     derived: int = Field(default=0)
+    adv_state: int = Field(default=0, description="优势状态: 1优势, -1劣势, 0正常")
 
 
 class SaveField(BaseModel):
@@ -90,6 +92,7 @@ class SaveField(BaseModel):
     bonus: int = Field(default=0, description="临时修正值")
     override: Optional[int] = Field(default=None)
     derived: int = Field(default=0)
+    adv_state: int = Field(default=0, description="优势状态: 1优势, -1劣势, 0正常")
 
 
 class DeathSaves(BaseModel):
@@ -113,38 +116,54 @@ class ClassResource(BaseModel):
     max: int = Field(default=0)
     reset_on: str = Field(default="长休", description="恢复周期: 短休, 长休")
 
+class AdjustableValue(BaseModel):
+    """通用的可调节数值结构 (支持基础值、加值、覆盖值)"""
+    base: int = Field(default=0)
+    bonus: int = Field(default=0)
+    override: Optional[int] = Field(default=None)
+    derived: int = Field(default=0)
+
+class GeneralDC(BaseModel):
+    """通用 DC (如战技 DC, 灵能 DC)"""
+    ability: str = Field(default="strength", description="关联属性")
+    bonus: int = Field(default=0, description="额外加值")
+    derived: int = Field(default=8)
+
+class Defenses(BaseModel):
+    """防御特性 (抗性、免疫、易伤)"""
+    resistances: list[str] = Field(default_factory=list)
+    immunities: list[str] = Field(default_factory=list)
+    vulnerabilities: list[str] = Field(default_factory=list)
+    damage_reduction: int = Field(default=0)
+
 class CombatStats(BaseModel):
     # --- 生命值系统 ---
     hp_rolls: list[int] = Field(
-        default_factory=list, description="用户填写的每级生命骰掷骰结果，如 [10, 6, 8]"
+        default_factory=list, description="用户填写的每级生命骰掷骰结果"
     )
-    bonus_hp_per_level: int = Field(
-        default=0, description="每级额外生命加值"
-    )
-    hp_max: int = Field(default=0)
+    bonus_hp_per_level: int = Field(default=0)
+    hp_max: AdjustableValue = Field(default_factory=AdjustableValue)
     hp_current: int = Field(default=0)
     temp_hp: int = Field(default=0)
 
+    # --- 防御特性 (抗性/免疫/易伤) ---
+    defenses: Defenses = Field(default_factory=Defenses)
+
     # --- 职业资源 ---
-    class_resources: list[ClassResource] = Field(
-        default_factory=list,
-        description="特殊资源列表"
-    )
+    class_resources: list[ClassResource] = Field(default_factory=list)
 
     # --- 短休与濒死 ---
-    hit_dice: dict[str, HitDiceSlot] = Field(
-        default_factory=dict,
-        description="拥有的生命骰池，例如 {'d10': HitDiceSlot(), 'd6': HitDiceSlot()}",
-    )
-    death_saves: DeathSaves = Field(
-        default_factory=DeathSaves, description="死亡豁免记录"
-    )
+    hit_dice: dict[str, HitDiceSlot] = Field(default_factory=dict)
+    death_saves: DeathSaves = Field(default_factory=DeathSaves)
 
-    # --- 其他战斗属性 ---
-    armor_class: int = Field(default=10)
-    initiative: int = Field(default=0)
+    # --- 核心战斗属性 (升级为可调节结构) ---
+    armor_class: AdjustableValue = Field(default_factory=AdjustableValue)
+    initiative: AdjustableValue = Field(default_factory=AdjustableValue)
     speed: int = Field(default=30)
     proficiency_bonus: int = Field(default=2)
+    
+    # --- 通用 DC ---
+    general_dc: GeneralDC = Field(default_factory=GeneralDC)
 
 
 class WeaponItem(BaseModel):
@@ -154,14 +173,6 @@ class WeaponItem(BaseModel):
     is_proficient: bool = Field(default=True)
     derived_attack_bonus: int = Field(default=0)
     derived_damage_bonus: int = Field(default=0)
-
-
-class Defenses(BaseModel):
-    """防御特性 (抗性、免疫、易伤)"""
-    resistances: list[str] = Field(default_factory=list)
-    immunities: list[str] = Field(default_factory=list)
-    vulnerabilities: list[str] = Field(default_factory=list)
-    damage_reduction: int = Field(default=0)
 
 
 # ==========================================

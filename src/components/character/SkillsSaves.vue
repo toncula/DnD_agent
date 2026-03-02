@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckCircle2, Circle } from 'lucide-vue-next';
+import { CheckCircle2, Circle, ChevronUp, ChevronDown } from 'lucide-vue-next';
 
 const props = defineProps<{
   sheet: any;
@@ -28,16 +28,23 @@ const skillNames: Record<string, { label: string, stat: string }> = {
   persuasion: { label: '说服', stat: '魅' }
 };
 
-const toggleProficiency = (key: string) => {
+const updateVal = (key: string, updates: any) => {
   const newData = { ...props.sheet };
-  newData[key].is_proficient = !newData[key].is_proficient;
+  newData[key] = { ...newData[key], ...updates };
   emit('update', newData);
 };
 
+const toggleProficiency = (key: string) => {
+  updateVal(key, { is_proficient: !props.sheet[key].is_proficient });
+};
+
+const toggleAdv = (key: string) => {
+  const current = props.sheet[key].adv_state || 0;
+  updateVal(key, { adv_state: current === 0 ? 1 : current === 1 ? -1 : 0 });
+};
+
 const updateBonus = (key: string, value: number) => {
-  const newData = { ...props.sheet };
-  newData[key].bonus = value || 0;
-  emit('update', newData);
+  updateVal(key, { bonus: value || 0 });
 };
 </script>
 
@@ -45,7 +52,7 @@ const updateBonus = (key: string, value: number) => {
   <div class="bg-zinc-950/40 p-3 rounded-2xl border border-zinc-800 shadow-inner w-full min-w-0">
     <h3 class="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-3 flex items-center gap-2 px-1">
       <span class="w-1 h-1 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-      技能熟练 (Skills)
+      技能熟练
     </h3>
     
     <div class="flex flex-col gap-0.5">
@@ -55,19 +62,34 @@ const updateBonus = (key: string, value: number) => {
         class="flex items-center justify-between py-1 px-2 rounded-lg hover:bg-zinc-800/40 transition-all group"
       >
         <div class="flex items-center gap-2 min-w-0">
-          <button @click="toggleProficiency(key)" class="text-zinc-800 hover:text-emerald-500 transition-colors shrink-0">
+          <button @click="toggleProficiency(key)" class="text-zinc-800 hover:text-emerald-500 shrink-0">
             <CheckCircle2 v-if="sheet[key].is_proficient" class="w-3.5 h-3.5 text-emerald-600" />
             <Circle v-else class="w-3.5 h-3.5" />
           </button>
-          <span class="text-xs font-bold text-zinc-400 group-hover:text-zinc-200 truncate">{{ info.label }}</span>
-          <span class="text-[9px] text-zinc-700 font-black uppercase shrink-0">{{ info.stat }}</span>
+          
+          <div class="flex items-baseline gap-1.5 min-w-0">
+            <span class="text-xs font-bold text-zinc-400 group-hover:text-zinc-200 truncate">{{ info.label }}</span>
+            <span class="text-[8px] text-zinc-700 font-black uppercase shrink-0">{{ info.stat }}</span>
+          </div>
+          
+          <!-- 技能优劣势按钮 (改进) -->
+          <button 
+            @click.stop="toggleAdv(key.toString())" 
+            class="w-3.5 h-3.5 rounded border flex items-center justify-center transition-all hover:bg-zinc-800"
+            :class="sheet[key].adv_state === 1 ? 'bg-emerald-500/20 border-emerald-500/50' : sheet[key].adv_state === -1 ? 'bg-red-500/20 border-red-500/50' : 'bg-zinc-950 border-zinc-800/50'"
+            :title="sheet[key].adv_state === 1 ? '优势' : sheet[key].adv_state === -1 ? '劣势' : '正常 (点击切换技能检定优势/劣势)'"
+          >
+            <ChevronUp v-if="sheet[key].adv_state === 1" class="w-2 h-2 text-emerald-500" />
+            <ChevronDown v-else-if="sheet[key].adv_state === -1" class="w-2 h-2 text-red-500" />
+            <div v-else class="w-0.5 h-0.5 rounded-full bg-zinc-800 group-hover:bg-zinc-600"></div>
+          </button>
         </div>
+
         <div class="flex items-center gap-2">
-          <!-- 临时加值输入 (核心变更) -->
           <input 
             type="number" 
             :value="sheet[key].bonus"
-            @input="e => updateBonus(key, parseInt((e.target as HTMLInputElement).value))"
+            @input="e => updateBonus(key.toString(), parseInt((e.target as HTMLInputElement).value))"
             class="w-8 bg-blue-500/10 border border-blue-500/20 rounded text-[9px] text-center text-blue-400 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity outline-none"
             placeholder="0"
           />

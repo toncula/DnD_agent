@@ -52,8 +52,8 @@ const updateHPRoll = (index: number, value: any) => {
       <!-- 3. 基础战斗属性 (子组件) -->
       <div class="md:col-span-2">
         <MiscCombatStats 
-          :combat="combat" 
-          @update:combat="updateCombat" 
+          :sheet="sheet" 
+          @update="updateSheet" 
         />
       </div>
     </div>
@@ -65,7 +65,7 @@ const updateHPRoll = (index: number, value: any) => {
         class="flex items-center gap-2 text-[10px] font-black text-zinc-500 uppercase hover:text-zinc-200 transition-colors"
       >
         <Dice5 class="w-3 h-3" />
-        每级生命骰明细 (HP History)
+        每级生命骰明细
         <component :is="isRollsVisible ? ChevronUp : ChevronDown" class="w-3 h-3" />
       </button>
 

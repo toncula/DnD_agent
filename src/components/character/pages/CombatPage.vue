@@ -7,6 +7,7 @@ import FeatureTabs from '../FeatureTabs.vue';
 import EquipmentSlots from '../EquipmentSlots.vue';
 import ItemTooltip from '../ItemTooltip.vue';
 import ResourceTracker from '../ResourceTracker.vue';
+import DefensesBlock from '../DefensesBlock.vue';
 import { ref, watch } from 'vue';
 
 const props = defineProps<{ sheet: any }>();
@@ -43,9 +44,10 @@ watch(() => props.sheet.inventory, (newInv) => {
 
   // 1. 同步护甲 AC
   const equippedArmor = newInv.find((i: any) => i.category === '装备' && i.item_type === '护甲' && i.is_equipped);
-  const targetAC = equippedArmor ? parseInt(equippedArmor.description?.match(/\d+/)?.[0] || '11') : 0;
-  if (newSheet.equipped_armor_base_ac !== targetAC) {
-    newSheet.equipped_armor_base_ac = targetAC;
+  const targetBaseAC = equippedArmor ? parseInt(equippedArmor.description?.match(/\d+/)?.[0] || '11') : 10;
+  
+  if (newSheet.combat.armor_class.base !== targetBaseAC) {
+    newSheet.combat.armor_class.base = targetBaseAC;
     changed = true;
   }
 
@@ -54,7 +56,6 @@ watch(() => props.sheet.inventory, (newInv) => {
   const offWeapon = newInv.find((i: any) => i.is_equipped && i.slot_type === '副手' && i.item_type === '武器');
 
   const syncWeapon = (invItem: any, index: number) => {
-    // 处理双手占位
     if (index === 1 && mainWeapon?.slot_type === '双手') {
       const dmg = mainWeapon.description?.match(/\d+d\d+/)?.[0] || '1d4';
       if (!newSheet.weapons[1] || !newSheet.weapons[1].is_2h_occupied || newSheet.weapons[1].name !== mainWeapon.name) {
@@ -113,16 +114,12 @@ watch(() => props.sheet.inventory, (newInv) => {
 
 const handleEquip = (item: any) => {
   const newSheet = JSON.parse(JSON.stringify(props.sheet));
-  
-  // 1. 在背包中寻找该物品并切换状态
   const invItem = newSheet.inventory.find((i: any) => i.name === item.name);
   if (!invItem) return;
 
-  // 如果已经装备，则卸下
   if (invItem.is_equipped) {
     invItem.is_equipped = false;
-    // 重置相关数值
-    if (invItem.item_type === '护甲' || invItem.slot_type === '躯干') newSheet.equipped_armor_base_ac = 0;
+    if (invItem.item_type === '护甲' || invItem.slot_type === '躯干') newSheet.combat.armor_class.base = 10;
     else if (invItem.item_type === '盾牌') newSheet.has_shield = false;
     else if (invItem.slot_type === '主手' || invItem.slot_type === '双手') {
        newSheet.weapons[0] = { name: '空手', damage_dice: '1d4' };
@@ -135,12 +132,10 @@ const handleEquip = (item: any) => {
     return;
   }
 
-  // 2. 正常装备逻辑
   const slot = item.slot_type;
   const itemType = item.item_type;
   const itemName = item.name.toLowerCase();
   
-  // 同类排他逻辑
   newSheet.inventory.forEach((i: any) => {
     if (i.slot_type === slot && slot !== '' && i.is_equipped) i.is_equipped = false;
     if (i.item_type === itemType && itemType === '盾牌' && i.is_equipped) i.is_equipped = false;
@@ -148,12 +143,10 @@ const handleEquip = (item: any) => {
   });
   invItem.is_equipped = true;
 
-  // 护甲逻辑
   if (itemType === '护甲' || slot === '躯干') {
     const match = item.description?.match(/\d+/);
-    newSheet.equipped_armor_base_ac = match ? parseInt(match[0]) : 11;
+    newSheet.combat.armor_class.base = match ? parseInt(match[0]) : 11;
   } 
-  // 盾牌逻辑
   else if (itemType === '盾牌') {
     newSheet.has_shield = true;
     if (newSheet.weapons.length > 1) {
@@ -163,7 +156,6 @@ const handleEquip = (item: any) => {
       });
     }
   } 
-  // 武器逻辑
   else if (itemType === '武器' || slot === '主手' || slot === '副手' || slot === '双手') {
     const damageMatch = item.description?.match(/\d+d\d+/);
     const newWeapon = {
@@ -204,69 +196,35 @@ const handleEquip = (item: any) => {
 <template>
   <div class="space-y-6 relative">
     <!-- 悬浮 Tooltip -->
-    <ItemTooltip 
-      v-if="hoveredItem" 
-      :item="hoveredItem" 
-      :x="mouseX" 
-      :y="mouseY" 
-    />
+    <ItemTooltip v-if="hoveredItem" :item="hoveredItem" :x="mouseX" :y="mouseY" />
 
     <!-- 核心战斗顶部状态栏 -->
-    <CombatStats 
-      :combat="sheet.combat" 
-      :level="sheet.prog.level"
-      :sheet="sheet"
-      @update:combat="v => updateSheet('combat', v)" 
-      @update:sheet="assignMultiple"
-    />
+    <CombatStats :combat="sheet.combat" :level="sheet.prog.level" :sheet="sheet" @update:combat="v => updateSheet('combat', v)" @update:sheet="assignMultiple" />
 
-    <!-- 职业特殊资源追踪 (核心新块) -->
-    <ResourceTracker 
-      v-if="sheet.combat.class_resources"
-      :resources="sheet.combat.class_resources" 
-      @update="v => updateSheet('combat', { ...sheet.combat, class_resources: v })"
-    />
-
-    <!-- 中间三栏布局 -->
-    <div class="grid grid-cols-1 lg:grid-cols-[200px_1fr_240px] gap-8 items-start">
-      <!-- 左：属性 (固定宽度) -->
-      <div class="w-[200px] shrink-0">
-        <StatGrid 
-          :sheet="sheet" 
-          @update="assignMultiple" 
+    <!-- 战术信息区：职业资源与防御特性 (并排布局) -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 items-stretch">
+      <div class="h-full">
+        <ResourceTracker 
+          v-if="sheet.combat.class_resources"
+          :resources="sheet.combat.class_resources" 
+          @update="v => updateSheet('combat', { ...sheet.combat, class_resources: v })"
         />
       </div>
-      
-      <!-- 中：装备纸娃娃 (自适应) -->
-      <div class="min-w-0">
-        <EquipmentSlots 
-          :sheet="sheet" 
-          @update="assignMultiple" 
-          @hover-item="handleHover"
-        />
-      </div>
-
-      <!-- 右：技能与豁免 (固定宽度) -->
-      <div class="w-[240px] shrink-0">
-        <SkillsSaves 
-          :sheet="sheet" 
-          @update="assignMultiple" 
+      <div class="h-full">
+        <DefensesBlock 
+          :defenses="sheet.combat.defenses" 
+          @update="v => updateSheet('combat', { ...sheet.combat, defenses: v })"
         />
       </div>
     </div>
+
+    <!-- 中间三栏布局 -->
+    <div class="grid grid-cols-1 lg:grid-cols-[200px_1fr_240px] gap-8 items-start">
+      <div class="w-[200px] shrink-0"><StatGrid :sheet="sheet" @update="assignMultiple" /></div>
+      <div class="min-w-0"><EquipmentSlots :sheet="sheet" @update="assignMultiple" @hover-item="handleHover" /></div>
+      <div class="w-[240px] shrink-0"><SkillsSaves :sheet="sheet" @update="assignMultiple" /></div>
+    </div>
     
-    <!-- 底部：背包与特性 -->
-    <FeatureTabs 
-      :sheet="sheet"
-      :features="sheet.features" 
-      :inventory="sheet.inventory" 
-      :spells="sheet.spells"
-      @update:features="v => updateSheet('features', v)"
-      @update:inventory="v => updateSheet('inventory', v)"
-      @update:spells="v => updateSheet('spells', v)" 
-      @update:sheet="assignMultiple"
-      @equip="handleEquip"
-      @hover-item="handleHover"
-    />
+    <FeatureTabs :sheet="sheet" :features="sheet.features" :inventory="sheet.inventory" :spells="sheet.spells" @update:features="v => updateSheet('features', v)" @update:inventory="v => updateSheet('inventory', v)" @update:spells="v => updateSheet('spells', v)" @update:sheet="assignMultiple" @equip="handleEquip" @hover-item="handleHover" />
   </div>
 </template>

@@ -22,7 +22,7 @@
     },
     "prog": {
         "character_class": "战士",
-        "level": 2,
+        "level": 1,
         "classes": [],
         "race": "人类",
         "subrace": "",
@@ -34,7 +34,8 @@
         "asi_bonus": 0,
         "override": null,
         "derived": 10,
-        "modifier": 0
+        "modifier": 0,
+        "adv_state": 0
     },
     "dexterity": {
         "base_score": 10,
@@ -42,7 +43,8 @@
         "asi_bonus": 0,
         "override": null,
         "derived": 10,
-        "modifier": 0
+        "modifier": 0,
+        "adv_state": 0
     },
     "constitution": {
         "base_score": 16,
@@ -50,23 +52,26 @@
         "asi_bonus": 0,
         "override": null,
         "derived": 16,
-        "modifier": 3
+        "modifier": 3,
+        "adv_state": 0
     },
     "intelligence": {
-        "base_score": 17,
+        "base_score": 13,
         "racial_bonus": 0,
         "asi_bonus": 0,
         "override": null,
-        "derived": 17,
-        "modifier": 3
+        "derived": 13,
+        "modifier": 1,
+        "adv_state": 0
     },
     "wisdom": {
-        "base_score": 14,
+        "base_score": 10,
         "racial_bonus": 0,
         "asi_bonus": 0,
         "override": null,
-        "derived": 14,
-        "modifier": 2
+        "derived": 10,
+        "modifier": 0,
+        "adv_state": 0
     },
     "charisma": {
         "base_score": 10,
@@ -74,183 +79,211 @@
         "asi_bonus": 0,
         "override": null,
         "derived": 10,
-        "modifier": 0
+        "modifier": 0,
+        "adv_state": 0
     },
     "str_save": {
         "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": 0
+        "derived": 0,
+        "adv_state": 0
     },
     "dex_save": {
         "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": 0
+        "derived": 0,
+        "adv_state": 0
     },
     "con_save": {
-        "is_proficient": true,
+        "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": 5
+        "derived": 3,
+        "adv_state": 0
     },
     "int_save": {
         "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": 3
+        "derived": 1,
+        "adv_state": 0
     },
     "wis_save": {
         "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": 2
+        "derived": 0,
+        "adv_state": 0
     },
     "cha_save": {
         "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": 0
+        "derived": 0,
+        "adv_state": 0
     },
     "athletics": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0
+        "derived": 0,
+        "adv_state": 0
     },
     "acrobatics": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0
+        "derived": 0,
+        "adv_state": 0
     },
     "sleight_of_hand": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0
+        "derived": 0,
+        "adv_state": 0
     },
     "stealth": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0
+        "derived": 0,
+        "adv_state": 0
     },
     "arcana": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 3
+        "derived": 1,
+        "adv_state": 0
     },
     "history": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 3
+        "derived": 1,
+        "adv_state": 0
     },
     "investigation": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 3
+        "derived": 1,
+        "adv_state": 0
     },
     "nature": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 3
+        "derived": 1,
+        "adv_state": 0
     },
     "religion": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 3
+        "derived": 1,
+        "adv_state": 0
     },
     "animal_handling": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 2
+        "derived": 0,
+        "adv_state": 0
     },
     "insight": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 2
+        "derived": 0,
+        "adv_state": 0
     },
     "medicine": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 2
+        "derived": 0,
+        "adv_state": 0
     },
     "perception": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 2
+        "derived": 0,
+        "adv_state": 0
     },
     "survival": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 2
+        "derived": 0,
+        "adv_state": 0
     },
     "deception": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0
+        "derived": 0,
+        "adv_state": 0
     },
     "intimidation": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0
+        "derived": 0,
+        "adv_state": 0
     },
     "performance": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0
+        "derived": 0,
+        "adv_state": 0
     },
     "persuasion": {
         "is_proficient": false,
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0
+        "derived": 0,
+        "adv_state": 0
     },
     "combat": {
-        "hp_rolls": [
-            8,
-            8
-        ],
+        "hp_rolls": [],
         "bonus_hp_per_level": 0,
-        "hp_max": 22,
+        "hp_max": 3,
         "hp_current": 0,
         "temp_hp": 0,
+        "defenses": {
+            "resistances": [],
+            "immunities": [],
+            "vulnerabilities": [],
+            "damage_reduction": 0
+        },
         "class_resources": [],
         "hit_dice": {
             "d10": {
-                "total": 2,
+                "total": 1,
                 "expended": 0
             }
         },
@@ -261,7 +294,12 @@
         "armor_class": 10,
         "initiative": 0,
         "speed": 30,
-        "proficiency_bonus": 2
+        "proficiency_bonus": 2,
+        "general_dc": {
+            "ability": "strength",
+            "bonus": 0,
+            "derived": 10
+        }
     },
     "equipped_armor_base_ac": 0,
     "has_shield": false,
@@ -270,24 +308,11 @@
     "inventory": [],
     "total_weight": 0,
     "carrying_capacity": 150,
-    "spells": [
-        {
-            "name": "新法术",
-            "level": 1,
-            "school": "塑能系",
-            "is_prepared": true,
-            "casting_time": "1动作",
-            "range": "60尺",
-            "components": "V, S",
-            "materials": "",
-            "duration": "即时",
-            "description": "法术说明..."
-        }
-    ],
+    "spells": [],
     "spellcasting": {
         "ability": "wisdom",
-        "spell_save_dc": 12,
-        "spell_attack_bonus": 4,
+        "spell_save_dc": 10,
+        "spell_attack_bonus": 2,
         "slots": {
             "1": {
                 "max_slots": 0,
