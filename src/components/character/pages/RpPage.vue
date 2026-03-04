@@ -14,26 +14,32 @@ const updateVal = (key: string, val: any) => {
   emit('update', { [key]: val });
 };
 
-const updateBio = (field: string, val: any) => {
-  const bio = { ...props.sheet.bio, [field]: val };
-  updateVal('bio', bio);
+const updateBio = (newBio: any) => {
+  updateVal('bio', newBio);
 };
 
 const updatePersonality = (field: string, val: any) => {
   const p = { ...props.sheet.bio.personality, [field]: val };
-  updateBio('personality', p);
+  const bio = { ...props.sheet.bio, personality: p };
+  updateBio(bio);
 };
 
 // 处理列表字段的同步 (如语言和工具)
 const updateBioList = (field: string, val: string) => {
   const list = val.split(/[,，]/).map(s => s.trim()).filter(s => s !== '');
-  updateBio(field, list);
+  const bio = { ...props.sheet.bio, [field]: list };
+  updateBio(bio);
 };
 </script>
 
 <template>
   <div class="space-y-8 pb-20">
-    <BioHeader :bio="sheet.bio" :prog="sheet.prog" @update:bio="updateBio" />
+    <BioHeader 
+      :bio="sheet.bio" 
+      :prog="sheet.prog" 
+      @update:bio="updateBio" 
+      @update:prog="v => updateVal('prog', v)"
+    />
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div class="lg:col-span-2 space-y-8">
@@ -47,15 +53,19 @@ const updateBioList = (field: string, val: string) => {
           <!-- 基础属性网格 -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
             <div v-for="f in [
-              {k:'age', l:'年龄', p:'20'}, {k:'gender', l:'性别', p:'男/女'},
-              {k:'height', l:'身高', p:'180cm'}, {k:'weight', l:'体重', p:'70kg'},
-              {k:'alignment', l:'阵营', p:'中立善'}, {k:'faith', l:'信仰', p:'无'},
-              {k:'hometown', l:'故乡', p:'无'}, {k:'background_name', l:'背景', p:'英雄'}
+              {k:'age', l:'年龄', p:'20', t:'number'}, {k:'gender', l:'性别', p:'男/女', t:'text'},
+              {k:'height', l:'身高', p:'180cm', t:'text'}, {k:'weight', l:'体重', p:'70kg', t:'text'},
+              {k:'alignment', l:'阵营', p:'中立善', t:'text'}, {k:'faith', l:'信仰', p:'无', t:'text'},
+              {k:'hometown', l:'故乡', p:'无', t:'text'}, {k:'background_name', l:'背景', p:'英雄', t:'text'}
             ]" :key="f.k" class="flex flex-col gap-1.5 px-2">
               <label class="text-[9px] font-black text-zinc-500 uppercase tracking-widest">{{ f.l }}</label>
               <input 
+                :type="f.t"
                 :value="sheet.bio[f.k]"
-                @input="e => updateBio(f.k, (e.target as HTMLInputElement).value)"
+                @input="e => {
+                  const val = f.t === 'number' ? (parseInt((e.target as HTMLInputElement).value) || 0) : (e.target as HTMLInputElement).value;
+                  updateBio({ ...sheet.bio, [f.k]: val });
+                }"
                 class="bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-sm text-zinc-200 outline-none focus:border-blue-500 transition-all"
                 :placeholder="f.p"
               />
@@ -102,7 +112,7 @@ const updateBioList = (field: string, val: string) => {
           </div>
           <textarea 
             :value="sheet.bio.backstory"
-            @input="e => updateBio('backstory', (e.target as HTMLTextAreaElement).value)"
+            @input="e => updateBio({ ...sheet.bio, backstory: (e.target as HTMLTextAreaElement).value })"
             rows="12"
             class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-6 text-sm text-zinc-400 outline-none focus:border-amber-500 leading-relaxed transition-all resize-none"
             placeholder="在此书写角色的过往经历..."

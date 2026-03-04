@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Plus, Trash2, Search, ChevronRight, ChevronDown, BookOpen, Clock, Zap, MapPin } from 'lucide-vue-next';
+import { Plus, Search, ChevronRight, ChevronDown } from 'lucide-vue-next';
+import SpellSlotTracker from '../SpellSlotTracker.vue';
+import SpellItem from '../SpellItem.vue';
 
 const props = defineProps<{ sheet: any }>();
 const emit = defineEmits(['update']);
+
+const handleSheetUpdate = (partial: any) => {
+  emit('update', partial);
+};
 
 const searchQuery = ref('');
 const filterLevel = ref<number | 'all'>(-1);
@@ -12,9 +18,9 @@ const editingIdx = ref<number | null>(null);
 
 const filteredSpells = computed(() => {
   return (props.sheet.spells || []).filter((s: any) => {
-    const matchesSearch = s.name.toLowerCase().includes(searchQuery.value.toLowerCase());
-    const matchesLevel = filterLevel.value === -1 || s.level === filterLevel.value;
-    return matchesSearch && matchesLevel;
+    const nameMatch = s.name.toLowerCase().includes(searchQuery.value.toLowerCase());
+    const levelMatch = filterLevel.value === -1 || s.level === filterLevel.value;
+    return nameMatch && levelMatch;
   });
 });
 
@@ -27,8 +33,8 @@ const spellsByLevel = computed(() => {
   return groups;
 });
 
-const updateSpells = (newSpells: any[]) => {
-  emit('update', { spells: newSpells });
+const updateSpells = () => {
+  emit('update', { spells: [...props.sheet.spells] });
 };
 
 const addSpell = (level: number = 1) => {
@@ -44,13 +50,18 @@ const addSpell = (level: number = 1) => {
     description: '法术说明...', 
     is_prepared: false 
   }];
-  updateSpells(newSpells);
+  emit('update', { spells: newSpells });
+  // 展开对应层级
+  expandedLevels.value[level] = true;
 };
 
-const removeSpell = (idx: number) => {
-  const newSpells = [...props.sheet.spells];
-  newSpells.splice(idx, 1);
-  updateSpells(newSpells);
+const removeSpell = (spell: any) => {
+  const idx = props.sheet.spells.indexOf(spell);
+  if (idx > -1) {
+    const newSpells = [...props.sheet.spells];
+    newSpells.splice(idx, 1);
+    emit('update', { spells: newSpells });
+  }
 };
 
 const toggleLevel = (lv: number) => {
@@ -60,11 +71,19 @@ const toggleLevel = (lv: number) => {
 
 <template>
   <div class="flex flex-col gap-6 pb-24">
+    <!-- 法术位追踪器 -->
+    <SpellSlotTracker :sheet="sheet" @update:sheet="handleSheetUpdate" />
+
+    <!-- 工具栏 -->
     <div class="flex flex-wrap items-center justify-between gap-4 bg-zinc-900/80 p-4 rounded-2xl border border-zinc-800 sticky top-0 z-10 backdrop-blur-md">
       <div class="flex items-center gap-4 flex-1 min-w-[300px]">
         <div class="relative flex-1">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-          <input v-model="searchQuery" placeholder="搜索法术..." class="w-full bg-zinc-950 border border-zinc-700 rounded-xl pl-10 pr-4 py-2 text-sm text-zinc-200 outline-none focus:border-blue-500" />
+          <input 
+            v-model="searchQuery" 
+            placeholder="搜索法术..." 
+            class="w-full bg-zinc-950 border border-zinc-700 rounded-xl pl-10 pr-4 py-2 text-sm text-zinc-200 outline-none focus:border-blue-500" 
+          />
         </div>
         <select v-model="filterLevel" class="bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-2 text-xs font-bold text-zinc-400 outline-none">
           <option :value="-1">全部环阶</option>
@@ -72,67 +91,49 @@ const toggleLevel = (lv: number) => {
           <option v-for="lv in 9" :key="lv" :value="lv">{{ lv }} 环</option>
         </select>
       </div>
-      <button @click="addSpell(1)" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all">+ 研习新法术</button>
+      <button @click="addSpell(1)" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all shadow-lg shadow-blue-900/20">
+        <Plus class="w-4 h-4" /> 研习新法术
+      </button>
     </div>
 
+    <!-- 法术列表 -->
     <div class="space-y-3">
       <div v-for="lv in 10" :key="lv-1" class="space-y-1">
-        <template v-if="spellsByLevel[lv-1] || filterLevel === (lv-1)">
-          <div @click="toggleLevel(lv-1)" class="flex items-center justify-between bg-zinc-900/40 hover:bg-zinc-800/40 p-3 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-zinc-700 group">
+        <template v-if="spellsByLevel[lv-1] || (filterLevel === -1 || filterLevel === (lv-1))">
+          <!-- 层级标题 -->
+          <div 
+            @click="toggleLevel(lv-1)" 
+            class="flex items-center justify-between bg-zinc-900/40 hover:bg-zinc-800/40 p-3 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-zinc-700 group"
+          >
             <div class="flex items-center gap-3">
               <component :is="expandedLevels[lv-1] ? ChevronDown : ChevronRight" class="w-4 h-4 text-zinc-600" />
               <span class="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{{ lv === 1 ? '戏法' : (lv-1) + ' 环' }}</span>
-              <span class="bg-zinc-800 text-[9px] font-black text-zinc-600 px-2 py-0.5 rounded-full">{{ (spellsByLevel[lv-1] || []).length }}</span>
+              <span v-if="(spellsByLevel[lv-1] || []).length > 0" class="bg-zinc-800 text-[9px] font-black text-zinc-600 px-2 py-0.5 rounded-full">
+                {{ (spellsByLevel[lv-1] || []).length }}
+              </span>
             </div>
-            <button @click.stop="addSpell(lv-1)" class="text-[9px] font-black text-blue-500/50 hover:text-blue-400 uppercase tracking-widest opacity-0 group-hover:opacity-100">+ 添加</button>
+            <button 
+              @click.stop="addSpell(lv-1)" 
+              class="text-[9px] font-black text-blue-500/50 hover:text-blue-400 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              + 在此添加
+            </button>
           </div>
 
+          <!-- 该层级的法术列表 -->
           <div v-show="expandedLevels[lv-1]" class="space-y-2 mt-1 pl-4 border-l border-zinc-800/50 ml-5">
-            <div v-for="(spell, i) in (spellsByLevel[lv-1] || [])" :key="i" class="flex flex-col bg-zinc-900/20 rounded-xl border border-zinc-800/50 overflow-hidden">
-              <div @click="editingIdx = editingIdx === i ? null : i" class="flex items-center gap-4 p-2 pr-4 cursor-pointer hover:bg-zinc-800/30 group">
-                <input v-model="spell.name" @click.stop @change="updateSpells(sheet.spells)" class="bg-transparent text-sm font-bold text-zinc-200 outline-none focus:text-blue-400 min-w-[180px]" />
-                <span class="text-[9px] font-black text-zinc-600 uppercase px-2 py-0.5 bg-zinc-950 rounded border border-zinc-800">{{ spell.school }}</span>
-                <div class="flex-1 flex items-center gap-4 text-[10px] text-zinc-500 overflow-hidden">
-                  <span class="flex items-center gap-1 shrink-0"><Clock class="w-3 h-3" /> {{ spell.casting_time }}</span>
-                  <span class="flex items-center gap-1 shrink-0"><MapPin class="w-3 h-3" /> {{ spell.range }}</span>
-                  <span class="truncate italic opacity-60">{{ spell.description }}</span>
-                </div>
-                <button @click.stop="removeSpell(sheet.spells.indexOf(spell))" class="p-1 text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100"><Trash2 class="w-3.5 h-3.5" /></button>
-              </div>
-
-              <div v-if="editingIdx === i" class="p-4 bg-zinc-950/30 border-t border-zinc-800 grid grid-cols-1 md:grid-cols-3 gap-4 animate-in slide-in-from-top-1">
-                <div class="flex flex-col gap-1">
-                  <label class="text-[8px] font-black text-zinc-600 uppercase">法术系别</label>
-                  <select v-model="spell.school" @change="updateSpells(sheet.spells)" class="bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-300 outline-none">
-                    <option v-for="s in ['防护系', '咒法系', '预言系', '惑控系', '塑能系', '幻术系', '死灵系', '变化系']" :key="s" :value="s">{{ s }}</option>
-                  </select>
-                </div>
-                <div class="flex flex-col gap-1">
-                  <label class="text-[8px] font-black text-zinc-600 uppercase">施法时间</label>
-                  <input v-model="spell.casting_time" @change="updateSpells(sheet.spells)" class="bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-300 outline-none" />
-                </div>
-                <div class="flex flex-col gap-1">
-                  <label class="text-[8px] font-black text-zinc-600 uppercase">施法距离</label>
-                  <input v-model="spell.range" @change="updateSpells(sheet.spells)" class="bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-300 outline-none" />
-                </div>
-                <div class="flex flex-col gap-1">
-                  <label class="text-[8px] font-black text-zinc-600 uppercase">法术成分</label>
-                  <input v-model="spell.components" @change="updateSpells(sheet.spells)" class="bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-300 outline-none" />
-                </div>
-                <div class="flex flex-col gap-1 md:col-span-2">
-                  <label class="text-[8px] font-black text-zinc-600 uppercase">材料描述</label>
-                  <input v-model="spell.materials" @change="updateSpells(sheet.spells)" class="bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-300 outline-none" />
-                </div>
-                <div class="flex flex-col gap-1">
-                  <label class="text-[8px] font-black text-zinc-600 uppercase">持续时间</label>
-                  <input v-model="spell.duration" @change="updateSpells(sheet.spells)" class="bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-300 outline-none" />
-                </div>
-                <div class="flex flex-col gap-1 md:col-span-3">
-                  <label class="text-[8px] font-black text-zinc-600 uppercase">法术说明</label>
-                  <textarea v-model="spell.description" @change="updateSpells(sheet.spells)" rows="4" class="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-400 outline-none leading-relaxed resize-none"></textarea>
-                </div>
-              </div>
-            </div>
+            <template v-if="(spellsByLevel[lv-1] || []).length > 0">
+              <SpellItem 
+                v-for="spell in spellsByLevel[lv-1]" 
+                :key="spell.name + lv"
+                :spell="spell"
+                :is-editing="editingIdx === sheet.spells.indexOf(spell)"
+                @update="updateSpells"
+                @remove="removeSpell(spell)"
+                @toggle-edit="editingIdx = (editingIdx === sheet.spells.indexOf(spell) ? null : sheet.spells.indexOf(spell))"
+              />
+            </template>
+            <div v-else class="py-2 text-[10px] text-zinc-700 italic pl-4">暂无此环阶法术</div>
           </div>
         </template>
       </div>

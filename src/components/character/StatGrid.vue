@@ -52,7 +52,9 @@ const toggleSaveProficiency = (saveKey: string) => {
         <div class="bg-zinc-900 p-1.5 rounded-lg border border-zinc-800"><TrendingUp class="w-4 h-4 text-zinc-500" /></div>
         <span class="text-[9px] font-black text-zinc-600 uppercase tracking-widest">熟练加值</span>
       </div>
-      <input type="number" :value="sheet.combat.proficiency_bonus" @input="e => updateCombat('proficiency_bonus', parseInt((e.target as HTMLInputElement).value) || 0)" class="w-10 bg-zinc-900 border border-zinc-800 rounded-lg py-1 text-center text-lg font-black text-zinc-100 outline-none" />
+      <div class="w-10 bg-zinc-900 border border-zinc-800 rounded-lg py-1 text-center text-lg font-black text-zinc-400 cursor-not-allowed" title="由等级自动计算">
+        +{{ sheet.combat.proficiency_bonus }}
+      </div>
     </div>
 
     <div v-for="item in statMapping" :key="item.key" class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-3 flex flex-col relative shadow-lg hover:border-zinc-600 transition-all group">

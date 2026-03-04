@@ -243,7 +243,11 @@ class CharacterSheet(BaseModel):
         self._calc_save(self.cha_save, self.charisma.modifier, pb)
 
         # 4. 计算 AC 和 先攻
-        self.combat.initiative = self.dexterity.modifier
+        if self.combat.initiative.override is not None:
+            self.combat.initiative.derived = self.combat.initiative.override
+        else:
+            self.combat.initiative.derived = self.dexterity.modifier + self.combat.initiative.bonus
+            
         base_ac = self.equipped_armor_base_ac if self.equipped_armor_base_ac > 0 else 10
         shield_bonus = 2 if self.has_shield else 0
         dex_bonus = (
@@ -253,7 +257,11 @@ class CharacterSheet(BaseModel):
         )
         if self.equipped_armor_base_ac >= 15:
             dex_bonus = 0
-        self.combat.armor_class = base_ac + dex_bonus + shield_bonus
+            
+        if self.combat.armor_class.override is not None:
+            self.combat.armor_class.derived = self.combat.armor_class.override
+        else:
+            self.combat.armor_class.derived = base_ac + dex_bonus + shield_bonus + self.combat.armor_class.bonus
 
         # 5. 计算完整的 18 项技能
         self._calc_skill(self.athletics, self.strength.modifier, pb)
@@ -303,12 +311,15 @@ class CharacterSheet(BaseModel):
             self.spellcasting.spell_attack_bonus = pb + caster_stat.modifier
 
         # --- [修改] 9. 支持兼职的全系法术位自动推算 ---
-        # 如果没有显式配置兼职字典，使用主职业构建字典
-        current_classes = self.prog.classes
-        if not current_classes:
-            current_classes = {self.prog.character_class: self.prog.level}
+        # 将职业列表转换为字典以便计算
+        class_dict = {}
+        if self.prog.classes:
+            for c in self.prog.classes:
+                class_dict[c.name] = c.level
+        else:
+            class_dict = {self.prog.character_class: self.prog.level}
 
-        slots_data = calculate_max_spell_slots(current_classes)
+        slots_data = calculate_max_spell_slots(class_dict)
 
         # 填充标准法术位
         standard_array = slots_data["standard_slots"]
@@ -338,7 +349,7 @@ class CharacterSheet(BaseModel):
         )
         self.combat.hp_max = max(1, calculated_hp_max)  # 最少为1
 
-        # 自动推演生命骰池 (根据兼职字典)
+        # 自动推演生命骰池 (根据职业字典)
         HD_MAP = {
             "法师": "d6",
             "术士": "d6",
@@ -358,7 +369,7 @@ class CharacterSheet(BaseModel):
         }
 
         new_hd_totals = {}
-        for cls_name, lvl in current_classes.items():
+        for cls_name, lvl in class_dict.items():
             hd_type = "d8"  # 默认兜底
             for key, val in HD_MAP.items():
                 if key in cls_name:

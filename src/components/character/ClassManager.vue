@@ -8,9 +8,14 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:prog']);
 
+const emitProg = (newClasses: any[]) => {
+  const totalLevel = newClasses.reduce((sum, c) => sum + (parseInt(c.level) || 0), 0);
+  emit('update:prog', { ...props.prog, classes: newClasses, level: totalLevel || 1 });
+};
+
 const addClass = () => {
   const newClasses = [...props.prog.classes, { name: '战士', level: 1, subclass: '', is_primary: false, hit_die: 'd10' }];
-  emit('update:prog', { ...props.prog, classes: newClasses });
+  emitProg(newClasses);
 };
 
 const updateClass = (index: number, updates: any) => {
@@ -21,13 +26,13 @@ const updateClass = (index: number, updates: any) => {
     newClasses.forEach((c, i) => { if (i !== index) c.is_primary = false; });
   }
   
-  emit('update:prog', { ...props.prog, classes: newClasses });
+  emitProg(newClasses);
 };
 
 const removeClass = (index: number) => {
   const newClasses = [...props.prog.classes];
   newClasses.splice(index, 1);
-  emit('update:prog', { ...props.prog, classes: newClasses });
+  emitProg(newClasses);
 };
 </script>
 

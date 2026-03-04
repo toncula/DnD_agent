@@ -143,15 +143,19 @@ async def get_character():
 async def update_character(req: CharacterUpdate):
     logger.info("收到更新人物卡请求")
     try:
+        # 打印接收到的数据键名，帮助调试结构
+        logger.info(f"接收到的数据顶层键: {list(req.data.keys())}")
         # 进行 Pydantic 验证
         character = CharacterSheet.model_validate(req.data)
         char_path = BASE_DIR / "data" / "processed" / "mock_character.json"
         CharacterLoader.save_to_json(character, char_path)
+        logger.info("人物卡数据保存成功")
         return character.model_dump()
     except Exception as e:
         # 关键：打印出具体哪里验证失败了
         logger.error(f"人物卡数据验证失败! 详细错误: {str(e)}")
-        # 如果是因为数据类型不匹配，这里会打印出具体的路径
+        # 尝试打印出接收到的数据，帮助定位问题
+        # logger.error(f"接收到的原始数据: {req.data}") 
         raise HTTPException(status_code=400, detail=f"数据格式错误: {str(e)}")
 
 @app.post("/v1/chat", response_model=ChatResponse)

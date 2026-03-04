@@ -1,31 +1,38 @@
 {
     "bio": {
-        "character_name": "未命名英雄",
-        "player_name": "",
-        "gender": "",
+        "character_name": "yeye",
+        "gender": "33",
         "age": 20,
-        "height": "",
-        "weight": "",
+        "height": "44",
+        "weight": "55",
         "alignment": "绝对中立",
-        "faith": "",
-        "hometown": "",
-        "background_name": "",
+        "faith": "66",
+        "hometown": "77",
+        "background_name": "88",
         "backstory": "",
         "personality": {
-            "traits": "",
-            "ideals": "",
-            "bonds": "",
-            "flaws": ""
+            "traits": "99",
+            "ideals": "22",
+            "bonds": "33",
+            "flaws": "66"
         },
         "languages": [],
         "tool_proficiencies": []
     },
     "prog": {
-        "character_class": "战士",
-        "level": 1,
-        "classes": [],
+        "character_class": "德鲁伊",
+        "level": 3,
+        "classes": [
+            {
+                "name": "德鲁伊",
+                "level": 3,
+                "subclass": "",
+                "is_primary": true,
+                "hit_die": "d8"
+            }
+        ],
         "race": "人类",
-        "subrace": "",
+        "subrace": "33",
         "exp": 0
     },
     "strength": {
@@ -38,15 +45,6 @@
         "adv_state": 0
     },
     "dexterity": {
-        "base_score": 10,
-        "racial_bonus": 0,
-        "asi_bonus": 0,
-        "override": null,
-        "derived": 10,
-        "modifier": 0,
-        "adv_state": 0
-    },
-    "constitution": {
         "base_score": 16,
         "racial_bonus": 0,
         "asi_bonus": 0,
@@ -55,13 +53,22 @@
         "modifier": 3,
         "adv_state": 0
     },
-    "intelligence": {
-        "base_score": 13,
+    "constitution": {
+        "base_score": 14,
         "racial_bonus": 0,
         "asi_bonus": 0,
         "override": null,
-        "derived": 13,
-        "modifier": 1,
+        "derived": 14,
+        "modifier": 2,
+        "adv_state": 0
+    },
+    "intelligence": {
+        "base_score": 10,
+        "racial_bonus": 0,
+        "asi_bonus": 0,
+        "override": null,
+        "derived": 10,
+        "modifier": 0,
         "adv_state": 0
     },
     "wisdom": {
@@ -93,21 +100,21 @@
         "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": 0,
+        "derived": 3,
         "adv_state": 0
     },
     "con_save": {
         "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": 3,
+        "derived": 2,
         "adv_state": 0
     },
     "int_save": {
         "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": 1,
+        "derived": 0,
         "adv_state": 0
     },
     "wis_save": {
@@ -137,7 +144,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0,
+        "derived": 3,
         "adv_state": 0
     },
     "sleight_of_hand": {
@@ -145,7 +152,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0,
+        "derived": 3,
         "adv_state": 0
     },
     "stealth": {
@@ -153,7 +160,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0,
+        "derived": 3,
         "adv_state": 0
     },
     "arcana": {
@@ -161,7 +168,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 1,
+        "derived": 0,
         "adv_state": 0
     },
     "history": {
@@ -169,7 +176,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 1,
+        "derived": 0,
         "adv_state": 0
     },
     "investigation": {
@@ -177,7 +184,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 1,
+        "derived": 0,
         "adv_state": 0
     },
     "nature": {
@@ -185,7 +192,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 1,
+        "derived": 0,
         "adv_state": 0
     },
     "religion": {
@@ -193,7 +200,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 1,
+        "derived": 0,
         "adv_state": 0
     },
     "animal_handling": {
@@ -269,10 +276,14 @@
         "adv_state": 0
     },
     "combat": {
-        "hp_rolls": [],
+        "hp_rolls": [
+            8,
+            8,
+            8
+        ],
         "bonus_hp_per_level": 0,
-        "hp_max": 3,
-        "hp_current": 0,
+        "hp_max": 30,
+        "hp_current": 10,
         "temp_hp": 0,
         "defenses": {
             "resistances": [],
@@ -282,8 +293,8 @@
         },
         "class_resources": [],
         "hit_dice": {
-            "d10": {
-                "total": 1,
+            "d8": {
+                "total": 3,
                 "expended": 0
             }
         },
@@ -291,8 +302,18 @@
             "successes": 0,
             "failures": 0
         },
-        "armor_class": 10,
-        "initiative": 0,
+        "armor_class": {
+            "base": 10,
+            "bonus": 0,
+            "override": null,
+            "derived": 13
+        },
+        "initiative": {
+            "base": 0,
+            "bonus": 0,
+            "override": null,
+            "derived": 3
+        },
         "speed": 30,
         "proficiency_bonus": 2,
         "general_dc": {
@@ -308,20 +329,63 @@
     "inventory": [],
     "total_weight": 0,
     "carrying_capacity": 150,
-    "spells": [],
+    "spells": [
+        {
+            "name": "新法术1",
+            "level": 1,
+            "school": "塑能系",
+            "is_prepared": true,
+            "is_always_prepared": false,
+            "override_ability": null,
+            "casting_time": "1动作",
+            "range": "60尺",
+            "components": "V, S",
+            "materials": "",
+            "duration": "即时",
+            "description": "法术说明..."
+        },
+        {
+            "name": "新法术2",
+            "level": 2,
+            "school": "塑能系",
+            "is_prepared": true,
+            "is_always_prepared": false,
+            "override_ability": null,
+            "casting_time": "1动作",
+            "range": "60尺",
+            "components": "V, S",
+            "materials": "",
+            "duration": "即时",
+            "description": "法术说明..."
+        },
+        {
+            "name": "新法术3",
+            "level": 3,
+            "school": "塑能系",
+            "is_prepared": true,
+            "is_always_prepared": false,
+            "override_ability": null,
+            "casting_time": "1动作",
+            "range": "60尺",
+            "components": "V, S",
+            "materials": "",
+            "duration": "即时",
+            "description": "法术说明..."
+        }
+    ],
     "spellcasting": {
         "ability": "wisdom",
         "spell_save_dc": 10,
         "spell_attack_bonus": 2,
         "slots": {
             "1": {
-                "max_slots": 0,
+                "max_slots": 4,
                 "expended": 0,
                 "override": null
             },
             "2": {
-                "max_slots": 0,
-                "expended": 0,
+                "max_slots": 2,
+                "expended": 1,
                 "override": null
             },
             "3": {

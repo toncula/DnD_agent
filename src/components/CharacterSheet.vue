@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue';
+import { ref, watch, onUnmounted, computed } from 'vue';
 import { RefreshCw, CheckCircle2, UserCircle, Swords, BookOpen, Lock } from 'lucide-vue-next';
 
 import RpPage from './character/pages/RpPage.vue';
@@ -19,11 +19,42 @@ const tabs = [
 ];
 const currentTab = ref('rp');
 
+// 施法能力判定：转为计算属性以实现瞬时响应
+const canCast = computed(() => {
+  const casterConfig: Record<string, number> = { '法师': 1, '牧师': 1, '德鲁伊': 1, '吟游诗人': 1, '术士': 1, '圣武士': 0.5, '游侠': 0.5, '奥法骑士': 0.33, '诡术随从': 0.33, '人造师': 0.5 };
+  let effectiveLevel = 0;
+  let pactLevel = 0;
+  
+  const classes = localData.value.prog?.classes || [];
+  classes.forEach((c: any) => {
+    const name = (c.name || '').trim();
+    if (casterConfig[name]) {
+      const rate = casterConfig[name];
+      if (rate === 1) effectiveLevel += c.level;
+      else if (rate === 0.5) effectiveLevel += Math.floor(c.level / 2);
+      else if (rate === 0.33) effectiveLevel += Math.floor(c.level / 3);
+    } else if (name === '邪术师') {
+      pactLevel = c.level;
+    }
+  });
+
+  return (effectiveLevel > 0 || pactLevel > 0 || (localData.value.spells?.length > 0));
+});
+
 // 1. 本地状态副本 (带结构平滑转换)
 const initDataStructure = (data: any) => {
   const d = JSON.parse(JSON.stringify(data));
   if (!d.combat) d.combat = {};
-  if (typeof d.combat.hp_max !== 'object' || d.combat.hp_max === null) d.combat.hp_max = { base: d.combat.hp_max || 10, bonus: 0, override: null, derived: d.combat.hp_max || 10 };
+  
+  // 核心修复：确保 hp_max 为数字，且 hp_current 存在
+  if (typeof d.combat.hp_max === 'object' && d.combat.hp_max !== null) {
+    d.combat.hp_max = d.combat.hp_max.derived || 10;
+  }
+  if (d.combat.hp_current === undefined) d.combat.hp_current = d.combat.hp_max || 10;
+  if (d.combat.temp_hp === undefined) d.combat.temp_hp = 0;
+  if (d.combat.bonus_hp_per_level === undefined) d.combat.bonus_hp_per_level = 0;
+  if (!d.combat.hp_rolls) d.combat.hp_rolls = [];
+
   if (typeof d.combat.armor_class !== 'object' || d.combat.armor_class === null) d.combat.armor_class = { base: d.combat.armor_class || 10, bonus: 0, override: null, derived: d.combat.armor_class || 10 };
   if (typeof d.combat.initiative !== 'object' || d.combat.initiative === null) d.combat.initiative = { base: 0, bonus: 0, override: null, derived: d.combat.initiative || 0 };
   if (!d.combat.general_dc) d.combat.general_dc = { ability: 'strength', bonus: 0, derived: 8 };
@@ -35,6 +66,16 @@ const initDataStructure = (data: any) => {
 };
 
 const localData = ref(initDataStructure(props.initialData));
+
+// 关键修复：当 props 变化时（比如刷新后读取或保存后返回），同步更新本地数据
+watch(() => props.initialData, (newVal) => {
+  if (newVal) {
+    isIncomingUpdate = true;
+    localData.value = initDataStructure(newVal);
+    setTimeout(() => { isIncomingUpdate = false; }, 50);
+  }
+}, { deep: true });
+
 const syncStatus = ref<'saved' | 'syncing' | 'error'>('saved');
 
 let isIncomingUpdate = false;
@@ -51,7 +92,10 @@ const performSync = () => {
   syncStatus.value = 'syncing';
   
   const dataToSend = JSON.parse(JSON.stringify(localData.value));
-  const currentLevel = dataToSend.prog.level || 1;
+  
+  // 0. 重新计算总等级 (二次确认)
+  const currentLevel = (dataToSend.prog.classes || []).reduce((sum: number, c: any) => sum + (parseInt(c.level) || 0), 0) || 1;
+  dataToSend.prog.level = currentLevel;
   const pb = Math.floor((currentLevel - 1) / 4) + 2;
 
   // 1. 基础属性计算
@@ -68,7 +112,7 @@ const performSync = () => {
   const casterConfig: Record<string, number> = { '法师': 1, '牧师': 1, '德鲁伊': 1, '吟游诗人': 1, '术士': 1, '圣武士': 0.5, '游侠': 0.5, '奥法骑士': 0.33, '诡术随从': 0.33, '人造师': 0.5 };
   let effectiveLevel = 0;
   let pactLevel = 0;
-  dataToSend.prog.classes.forEach((c: any) => {
+  (dataToSend.prog.classes || []).forEach((c: any) => {
     if (casterConfig[c.name]) {
       const rate = casterConfig[c.name];
       if (rate === 1) effectiveLevel += c.level;
@@ -81,6 +125,40 @@ const performSync = () => {
 
   // 施法能力判定：有效施法等级 > 0 或邪术师等级 > 0，或者手动添加了法术
   dataToSend.can_cast = (effectiveLevel > 0 || pactLevel > 0 || (dataToSend.spells?.length > 0));
+
+  // 简易法术位计算表 (5E 标准)
+  const SLOT_TABLE = [
+    [0,0,0,0,0,0,0,0,0], // 0
+    [2,0,0,0,0,0,0,0,0], // 1
+    [3,0,0,0,0,0,0,0,0], // 2
+    [4,2,0,0,0,0,0,0,0], // 3
+    [4,3,0,0,0,0,0,0,0], // 4
+    [4,3,2,0,0,0,0,0,0], // 5
+    [4,3,3,0,0,0,0,0,0], // 6
+    [4,3,3,1,0,0,0,0,0], // 7
+    [4,3,3,2,0,0,0,0,0], // 8
+    [4,3,3,3,1,0,0,0,0], // 9
+    [4,3,3,3,2,0,0,0,0], // 10
+    [4,3,3,3,2,1,0,0,0], // 11
+    [4,3,3,3,2,1,0,0,0], // 12
+    [4,3,3,3,2,1,1,0,0], // 13
+    [4,3,3,3,2,1,1,0,0], // 14
+    [4,3,3,3,2,1,1,1,0], // 15
+    [4,3,3,3,2,1,1,1,0], // 16
+    [4,3,3,3,2,1,1,1,1], // 17
+    [4,3,3,3,3,1,1,1,1], // 18
+    [4,3,3,3,3,2,1,1,1], // 19
+    [4,3,3,3,3,2,2,1,1], // 20
+  ];
+  
+  if (!dataToSend.spellcasting) dataToSend.spellcasting = { slots: {} };
+  if (!dataToSend.spellcasting.slots) dataToSend.spellcasting.slots = {};
+  
+  const slots = SLOT_TABLE[Math.min(effectiveLevel, 20)];
+  for (let i = 1; i <= 9; i++) {
+    if (!dataToSend.spellcasting.slots[i]) dataToSend.spellcasting.slots[i] = { max_slots: 0, expended: 0 };
+    dataToSend.spellcasting.slots[i].max_slots = slots[i-1];
+  }
 
   // 3. 战斗数值计算
   const dexMod = dataToSend.dexterity.modifier;
@@ -110,8 +188,9 @@ const performSync = () => {
   let calcHPBase = (hpRolls[0] || hdValue) + conMod;
   for (let i = 1; i < currentLevel; i++) calcHPBase += ((hpRolls[i] || Math.floor(hdValue/2)+1) + conMod);
   calcHPBase += (dataToSend.combat.bonus_hp_per_level || 0) * currentLevel;
-  dataToSend.combat.hp_max.base = calcHPBase;
-  dataToSend.combat.hp_max.derived = dataToSend.combat.hp_max.override !== null ? dataToSend.combat.hp_max.override : (calcHPBase + dataToSend.combat.hp_max.bonus);
+  
+  // 关键：这里直接设为数字，不要搞成对象
+  dataToSend.combat.hp_max = dataToSend.combat.hp_max_override !== undefined ? dataToSend.combat.hp_max_override : calcHPBase;
 
   isIncomingUpdate = true;
   dataToSend.combat.proficiency_bonus = pb;
@@ -139,16 +218,18 @@ onUnmounted(() => { if (timeoutId) clearTimeout(timeoutId); });
       <button 
         v-for="tab in tabs" 
         :key="tab.id"
-        @click="(!localData.can_cast && tab.id === 'spellbook') ? null : currentTab = tab.id"
+        @click="currentTab = tab.id"
         class="flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all duration-300 relative group"
         :class="[
           currentTab === tab.id ? 'bg-zinc-800 text-white shadow-lg border border-zinc-700' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50',
-          (!localData.can_cast && tab.id === 'spellbook') ? 'opacity-40 cursor-not-allowed grayscale' : ''
+          (!canCast && tab.id === 'spellbook') ? 'opacity-60 grayscale-[0.5]' : ''
         ]"
       >
-        <component :is="(!localData.can_cast && tab.id === 'spellbook') ? Lock : tab.icon" class="w-5 h-5" />
+        <component :is="(!canCast && tab.id === 'spellbook') ? Lock : tab.icon" class="w-5 h-5" />
         {{ tab.label }}
-        <div v-if="!localData.can_cast && tab.id === 'spellbook'" class="absolute inset-0 bg-transparent" title="当前职业等级无法施法"></div>
+        <div v-if="!canCast && tab.id === 'spellbook'" class="absolute -top-1 -right-1 bg-zinc-800 rounded-full p-1 border border-zinc-700 shadow-xl" title="暂无施法职业，但仍可手动管理法术">
+          <Lock class="w-2.5 h-2.5 text-amber-500" />
+        </div>
       </button>
     </div>
 

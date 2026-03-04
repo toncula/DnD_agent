@@ -91,9 +91,9 @@ const updateHD = (type: string, delta: number) => {
         </div>
         <span class="text-2xl font-black text-zinc-700">/</span>
         <div class="flex flex-col items-start cursor-pointer group" @click="showHpAdjuster = true">
-          <span class="text-4xl font-black text-zinc-400 leading-none group-hover:text-white transition-colors">{{ combat.hp_max.derived }}</span>
-          <span v-if="combat.hp_max.bonus !== 0" class="text-[10px] font-black text-blue-400 mt-1">
-            {{ combat.hp_max.bonus > 0 ? '+' : '' }}{{ combat.hp_max.bonus }} 修正
+          <span class="text-4xl font-black text-zinc-400 leading-none group-hover:text-white transition-colors">{{ combat.hp_max }}</span>
+          <span v-if="combat.bonus_hp_per_level !== 0" class="text-[10px] font-black text-blue-400 mt-1">
+            +{{ combat.bonus_hp_per_level * level }} 额外加成
           </span>
         </div>
       </div>
@@ -136,35 +136,26 @@ const updateHD = (type: string, delta: number) => {
       <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showHpAdjuster = false"></div>
       <div class="relative bg-zinc-900 border border-zinc-700 w-full max-w-xs rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
         <div class="flex justify-between items-center mb-6">
-          <h3 class="text-lg font-black text-white uppercase tracking-tighter">调整生命上限</h3>
+          <h3 class="text-lg font-black text-white uppercase tracking-tighter">生命上限详情</h3>
           <button @click="showHpAdjuster = false" class="text-zinc-500 hover:text-white"><X class="w-5 h-5" /></button>
         </div>
         <div class="space-y-4">
+          <p class="text-xs text-zinc-400 leading-relaxed">当前生命上限是由您的等级、体质调整值以及职业生命骰自动计算得出的。</p>
           <div class="flex flex-col gap-1.5">
-            <label class="text-[9px] font-black text-zinc-500 uppercase tracking-widest">基础计算值</label>
-            <div class="bg-zinc-950 p-2 rounded-xl text-zinc-400 font-mono text-center text-xl border border-zinc-800">{{ combat.hp_max.base }}</div>
+            <label class="text-[9px] font-black text-zinc-500 uppercase tracking-widest">当前数值</label>
+            <div class="bg-zinc-950 p-4 rounded-xl text-white font-mono text-center text-4xl border border-zinc-800">{{ combat.hp_max }}</div>
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-[9px] font-black text-blue-500 uppercase tracking-widest">临时修正</label>
+            <label class="text-[9px] font-black text-blue-500 uppercase tracking-widest">每级额外生命</label>
             <input 
               type="number" 
-              :value="combat.hp_max.bonus"
-              @input="e => updateHpField('bonus', parseInt((e.target as HTMLInputElement).value) || 0)"
+              :value="combat.bonus_hp_per_level"
+              @input="e => updateCombat('bonus_hp_per_level', parseInt((e.target as HTMLInputElement).value) || 0)"
               class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xl font-black text-blue-400 outline-none"
             />
           </div>
-          <div class="flex flex-col gap-1.5">
-            <label class="text-[9px] font-black text-amber-500 uppercase tracking-widest">强制覆盖值</label>
-            <input 
-              type="number" 
-              placeholder="留空则不覆盖"
-              :value="combat.hp_max.override || ''"
-              @input="e => updateHpField('override', parseInt((e.target as HTMLInputElement).value) || 0)"
-              class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xl font-black text-zinc-100 outline-none"
-            />
-          </div>
         </div>
-        <button @click="showHpAdjuster = false" class="w-full mt-6 bg-zinc-100 text-zinc-900 py-3 rounded-xl font-black text-sm hover:bg-white transition-all shadow-xl">确认修改</button>
+        <button @click="showHpAdjuster = false" class="w-full mt-6 bg-zinc-100 text-zinc-900 py-3 rounded-xl font-black text-sm hover:bg-white transition-all shadow-xl">完成</button>
       </div>
     </div>
   </div>

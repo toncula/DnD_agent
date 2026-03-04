@@ -15,7 +15,6 @@ class Personality(BaseModel):
 
 class Biography(BaseModel):
     character_name: str = Field(default="未命名英雄")
-    player_name: str = Field(default="")
     gender: str = Field(default="")
     age: int = Field(default=20)
     height: str = Field(default="")
@@ -142,8 +141,8 @@ class CombatStats(BaseModel):
         default_factory=list, description="用户填写的每级生命骰掷骰结果"
     )
     bonus_hp_per_level: int = Field(default=0)
-    hp_max: AdjustableValue = Field(default_factory=AdjustableValue)
-    hp_current: int = Field(default=0)
+    hp_max: int = Field(default=10)
+    hp_current: int = Field(default=10)
     temp_hp: int = Field(default=0)
 
     # --- 防御特性 (抗性/免疫/易伤) ---
