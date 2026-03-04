@@ -1,90 +1,153 @@
 <script setup lang="ts">
-import { Plus, Trash2 } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
+import { Plus, LayoutGrid } from 'lucide-vue-next';
+import InventoryItemRow from './InventoryItemRow.vue';
+import EncumbranceBar from './EncumbranceBar.vue';
+import InventorySearch from './InventorySearch.vue';
+import type { InventoryItem } from '../../types';
 
 const props = defineProps<{
-  inventory: any[];
+  inventory: InventoryItem[];
+  sheet: any; // 需要 sheet 里的 strength 和 encumbrance_settings
 }>();
 
-const emit = defineEmits(['update', 'equip', 'hover-item']);
+const emit = defineEmits(['update', 'equip', 'hover-item', 'update:sheet']);
+
+// 状态
+const searchQuery = ref('');
+const activeCategory = ref('全部');
+const categories = ['装备', '消耗品', '杂物'];
+
+// 过滤逻辑
+const filteredInventory = computed(() => {
+  let list = props.inventory;
+  
+  // 1. 类别过滤
+  if (activeCategory.value !== '全部') {
+    list = list.filter(i => i.category === activeCategory.value);
+  }
+  
+  // 2. 搜索过滤
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase();
+    list = list.filter(i => 
+      i.name.toLowerCase().includes(q) || 
+      i.description.toLowerCase().includes(q) ||
+      i.item_type.toLowerCase().includes(q)
+    );
+  }
+  
+  return list;
+});
+
+// 分组逻辑
+const groupedInventory = computed(() => {
+  if (activeCategory.value !== '全部') {
+    return [{ name: activeCategory.value, items: filteredInventory.value }];
+  }
+  
+  // 如果是全部，则按照类别分组显示
+  return categories.map(cat => ({
+    name: cat,
+    items: filteredInventory.value.filter(i => i.category === cat)
+  })).filter(group => group.items.length > 0);
+});
 
 const addItem = () => {
-  emit('update', [...props.inventory, { name: '新物品', quantity: 1, weight: 0, description: '', category: '杂物' }]);
+  const newItem: InventoryItem = {
+    name: '新物品',
+    quantity: 1,
+    weight: 0,
+    category: (activeCategory.value === '全部' ? '杂物' : activeCategory.value) as any,
+    item_type: '',
+    slot_type: '',
+    is_equipped: false,
+    is_proficient: true,
+    description: '',
+    rarity: '普通',
+    requires_attunement: false,
+    is_attuned: false,
+    properties: [],
+    damage_dice: '',
+    damage_type: '',
+    attack_bonus: 0,
+    damage_bonus: 0,
+    ac_bonus: 0,
+    strength_req: 0,
+    stealth_disadv: false,
+    derived_attack_roll: '',
+    derived_damage_roll: ''
+  };
+  emit('update', [...props.inventory, newItem]);
 };
 
-const removeItem = (index: number) => {
-  const list = [...props.inventory];
-  list.splice(index, 1);
-  emit('update', list);
+const updateItem = () => {
+  emit('update', props.inventory);
 };
 
-const handleHover = (item: any, event: MouseEvent) => {
-  emit('hover-item', item, event);
+const removeItem = (item: InventoryItem) => {
+  const idx = props.inventory.indexOf(item);
+  if (idx > -1) {
+    const list = [...props.inventory];
+    list.splice(idx, 1);
+    emit('update', list);
+  }
+};
+
+const handleSettingsUpdate = (newSettings: any) => {
+  emit('update:sheet', { ...props.sheet, encumbrance_settings: newSettings });
 };
 </script>
 
 <template>
-  <div class="space-y-2">
-    <div 
-      v-for="(item, i) in inventory" 
-      :key="i" 
-      class="flex items-center gap-4 bg-zinc-900/50 p-3 rounded-lg border border-zinc-700 group cursor-help"
-      @mouseenter="e => handleHover(item, e)"
-      @mouseleave="handleHover(null, null as any)"
-    >
-      <input type="number" v-model="item.quantity" @change="emit('update', inventory)" class="w-12 bg-zinc-800 rounded px-2 py-1 text-center text-sm" />
-      
-      <div class="flex-1 flex flex-col gap-1 min-w-0">
-        <div class="flex items-center gap-2">
-          <div v-if="item.is_equipped" class="bg-blue-600 text-white text-[8px] font-black px-1 rounded shrink-0">E</div>
-          <input v-model="item.name" @change="emit('update', inventory)" class="bg-transparent font-medium text-zinc-200 outline-none flex-1 truncate" />
-          
-          <select v-model="item.category" @change="emit('update', inventory)" class="bg-zinc-800 text-[10px] text-zinc-400 border-none rounded px-1.5 py-0.5 outline-none">
-            <option value="装备">装备</option>
-            <option value="消耗品">消耗品</option>
-            <option value="杂物">杂物</option>
-          </select>
+  <div class="flex flex-col h-full">
+    <!-- 1. 负重系统 (最上面) -->
+    <EncumbranceBar 
+      :total-weight="sheet.total_weight"
+      :strength="sheet.strength.derived"
+      :settings="sheet.encumbrance_settings || { base_mult: 5.0 }"
+      @update:settings="handleSettingsUpdate"
+    />
 
-          <select v-if="item.category === '装备'" v-model="item.item_type" @change="emit('update', inventory)" class="bg-zinc-800 text-[10px] text-amber-500 border-none rounded px-1.5 py-0.5 outline-none">
-            <option value="武器">武器</option>
-            <option value="护甲">护甲</option>
-            <option value="盾牌">盾牌</option>
-            <option value="饰品">饰品</option>
-          </select>
+    <!-- 2. 搜索与分类 (中间) -->
+    <InventorySearch 
+      v-model="searchQuery"
+      :categories="categories"
+      v-model:active-category="activeCategory"
+    />
 
-          <select v-if="item.category === '装备'" v-model="item.slot_type" @change="emit('update', inventory)" class="bg-zinc-800 text-[10px] text-blue-400 border-none rounded px-1.5 py-0.5 outline-none">
-            <option value="头部">头部</option>
-            <option value="躯干">躯干</option>
-            <option value="主手">主手</option>
-            <option value="副手">副手</option>
-            <option value="双手">双手</option>
-            <option value="足部">足部</option>
-            <option value="戒指">戒指</option>
-            <option value="项链">项链</option>
-          </select>
+    <!-- 3. 物品列表 (带分组) -->
+    <div class="space-y-8 pb-20">
+      <div v-for="group in groupedInventory" :key="group.name" class="space-y-3">
+        <div class="flex items-center gap-2 px-1">
+          <div class="w-1 h-4 bg-amber-500 rounded-full"></div>
+          <h3 class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">{{ group.name }}</h3>
+          <span class="text-[9px] font-bold text-zinc-600 bg-zinc-800/50 px-1.5 rounded-full">{{ group.items.length }}</span>
+          <div class="flex-1 h-[1px] bg-zinc-800/50 ml-2"></div>
+        </div>
+
+        <div class="space-y-2">
+          <InventoryItemRow 
+            v-for="(item, i) in group.items" 
+            :key="item.name + i"
+            :item="item"
+            @update="updateItem"
+            @remove="removeItem(item)"
+            @equip="i => emit('equip', i)"
+            @hover-item="(i, e) => emit('hover-item', i, e)"
+          />
         </div>
       </div>
-      
-      <button 
-        v-if="item.category === '装备' || item.item_type === '盾牌'"
-        @click="emit('equip', item)"
-        class="px-3 py-1 text-[10px] font-bold rounded border transition-all shrink-0"
-        :class="item.is_equipped ? 'bg-amber-600/20 text-amber-400 border-amber-500/50 hover:bg-amber-600' : 'bg-blue-600/20 text-blue-400 border-blue-500/50 hover:bg-blue-600'"
-      >
-        {{ item.is_equipped ? '卸下' : '装备' }}
-      </button>
 
-      <div class="flex items-center gap-2">
-        <input type="number" v-model="item.weight" @change="emit('update', inventory)" step="0.1" class="w-14 bg-zinc-800 rounded px-2 py-1 text-center text-xs" />
-        <span class="text-[10px] text-zinc-500">磅</span>
+      <!-- 空状态 -->
+      <div v-if="filteredInventory.length === 0" class="py-12 flex flex-col items-center justify-center text-zinc-600 bg-zinc-900/20 rounded-2xl border border-dashed border-zinc-800">
+        <LayoutGrid class="w-8 h-8 mb-3 opacity-20" />
+        <p class="text-xs font-bold uppercase tracking-widest">没有找到相关物品</p>
       </div>
 
-      <button @click="removeItem(i)" class="text-zinc-600 hover:text-red-500">
-        <Trash2 class="w-4 h-4" />
+      <button @click="addItem" class="w-full py-4 border-2 border-dashed border-zinc-800 rounded-xl text-zinc-600 hover:text-emerald-500 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest mt-4">
+        <Plus class="w-4 h-4" /> 添加{{ activeCategory === '全部' ? '' : activeCategory }}物品
       </button>
     </div>
-
-    <button @click="addItem" class="w-full py-3 border-2 border-dashed border-zinc-700 rounded-lg text-zinc-500 hover:text-emerald-500 transition-all flex items-center justify-center gap-2 text-sm mt-4">
-      <Plus class="w-4 h-4" /> 添加物品
-    </button>
   </div>
 </template>

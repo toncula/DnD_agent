@@ -9,15 +9,19 @@
         "faith": "66",
         "hometown": "77",
         "background_name": "88",
-        "backstory": "",
+        "backstory": "666",
         "personality": {
             "traits": "99",
             "ideals": "22",
             "bonds": "33",
             "flaws": "66"
         },
-        "languages": [],
-        "tool_proficiencies": []
+        "languages": [
+            "22"
+        ],
+        "tool_proficiencies": [
+            "3"
+        ]
     },
     "prog": {
         "character_class": "德鲁伊",
@@ -36,12 +40,12 @@
         "exp": 0
     },
     "strength": {
-        "base_score": 10,
+        "base_score": 16,
         "racial_bonus": 0,
         "asi_bonus": 0,
         "override": null,
-        "derived": 10,
-        "modifier": 0,
+        "derived": 16,
+        "modifier": 3,
         "adv_state": 0
     },
     "dexterity": {
@@ -72,12 +76,12 @@
         "adv_state": 0
     },
     "wisdom": {
-        "base_score": 10,
+        "base_score": 18,
         "racial_bonus": 0,
         "asi_bonus": 0,
         "override": null,
-        "derived": 10,
-        "modifier": 0,
+        "derived": 18,
+        "modifier": 4,
         "adv_state": 0
     },
     "charisma": {
@@ -93,7 +97,7 @@
         "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": 0,
+        "derived": 3,
         "adv_state": 0
     },
     "dex_save": {
@@ -121,7 +125,7 @@
         "is_proficient": false,
         "bonus": 0,
         "override": null,
-        "derived": 0,
+        "derived": 4,
         "adv_state": 0
     },
     "cha_save": {
@@ -136,7 +140,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0,
+        "derived": 3,
         "adv_state": 0
     },
     "acrobatics": {
@@ -208,7 +212,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0,
+        "derived": 4,
         "adv_state": 0
     },
     "insight": {
@@ -216,7 +220,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0,
+        "derived": 4,
         "adv_state": 0
     },
     "medicine": {
@@ -224,7 +228,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0,
+        "derived": 4,
         "adv_state": 0
     },
     "perception": {
@@ -232,7 +236,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0,
+        "derived": 4,
         "adv_state": 0
     },
     "survival": {
@@ -240,7 +244,7 @@
         "is_expertise": false,
         "bonus": 0,
         "override": null,
-        "derived": 0,
+        "derived": 4,
         "adv_state": 0
     },
     "deception": {
@@ -291,7 +295,14 @@
             "vulnerabilities": [],
             "damage_reduction": 0
         },
-        "class_resources": [],
+        "class_resources": [
+            {
+                "name": "新资源",
+                "current": 3,
+                "max": 3,
+                "reset_on": "长休"
+            }
+        ],
         "hit_dice": {
             "d8": {
                 "total": 3,
@@ -306,7 +317,7 @@
             "base": 10,
             "bonus": 0,
             "override": null,
-            "derived": 13
+            "derived": 14
         },
         "initiative": {
             "base": 0,
@@ -319,16 +330,140 @@
         "general_dc": {
             "ability": "strength",
             "bonus": 0,
-            "derived": 10
+            "derived": 13
         }
     },
-    "equipped_armor_base_ac": 0,
-    "has_shield": false,
-    "weapons": [],
     "features": [],
-    "inventory": [],
-    "total_weight": 0,
-    "carrying_capacity": 150,
+    "inventory": [
+        {
+            "name": "长剑",
+            "quantity": 1,
+            "weight": 3.0,
+            "category": "装备",
+            "item_type": "武器",
+            "slot_type": "双手",
+            "is_equipped": true,
+            "is_proficient": true,
+            "description": "一把锋利的长剑。",
+            "rarity": "普通",
+            "requires_attunement": false,
+            "is_attuned": false,
+            "properties": [
+                "多用 (1d10)"
+            ],
+            "damage_dice": "1d8",
+            "damage_type": "挥砍",
+            "attack_bonus": 0,
+            "damage_bonus": 0,
+            "weapon_mastery": "1122",
+            "special_actions": [
+                {
+                    "name": "新技能",
+                    "activation": "1动作",
+                    "description": "111"
+                }
+            ],
+            "ac_base": null,
+            "ac_bonus": 0,
+            "dex_cap": null,
+            "strength_req": 0,
+            "stealth_disadv": false,
+            "derived_attack_roll": "+5",
+            "derived_damage_roll": "1d8+3"
+        },
+        {
+            "name": "皮甲",
+            "quantity": 1,
+            "weight": 10.0,
+            "category": "装备",
+            "item_type": "护甲",
+            "slot_type": "躯干",
+            "is_equipped": true,
+            "is_proficient": true,
+            "description": "轻便的皮质护甲。",
+            "rarity": "普通",
+            "requires_attunement": false,
+            "is_attuned": false,
+            "properties": [],
+            "damage_dice": "",
+            "damage_type": "",
+            "attack_bonus": 0,
+            "damage_bonus": 0,
+            "weapon_mastery": "",
+            "special_actions": [],
+            "ac_base": 11,
+            "ac_bonus": 0,
+            "dex_cap": null,
+            "strength_req": 0,
+            "stealth_disadv": false,
+            "derived_attack_roll": "",
+            "derived_damage_roll": ""
+        },
+        {
+            "name": "盾牌",
+            "quantity": 1,
+            "weight": 6.0,
+            "category": "装备",
+            "item_type": "盾牌",
+            "slot_type": "副手",
+            "is_equipped": false,
+            "is_proficient": true,
+            "description": "木制的圆盾。",
+            "rarity": "普通",
+            "requires_attunement": false,
+            "is_attuned": false,
+            "properties": [],
+            "damage_dice": "",
+            "damage_type": "",
+            "attack_bonus": 0,
+            "damage_bonus": 0,
+            "weapon_mastery": "",
+            "special_actions": [],
+            "ac_base": null,
+            "ac_bonus": 2,
+            "dex_cap": null,
+            "strength_req": 0,
+            "stealth_disadv": false,
+            "derived_attack_roll": "",
+            "derived_damage_roll": ""
+        },
+        {
+            "name": "匕首",
+            "quantity": 1,
+            "weight": 3.0,
+            "category": "装备",
+            "item_type": "武器",
+            "slot_type": "副手",
+            "is_equipped": false,
+            "is_proficient": true,
+            "description": "",
+            "rarity": "普通",
+            "requires_attunement": false,
+            "is_attuned": false,
+            "properties": [],
+            "damage_dice": "1d6",
+            "damage_type": "",
+            "attack_bonus": 0,
+            "damage_bonus": 0,
+            "weapon_mastery": "",
+            "special_actions": [],
+            "ac_base": null,
+            "ac_bonus": 0,
+            "dex_cap": null,
+            "strength_req": 0,
+            "stealth_disadv": false,
+            "derived_attack_roll": "+5",
+            "derived_damage_roll": "1d6+3"
+        }
+    ],
+    "total_weight": 22.0,
+    "carrying_capacity": 240.0,
+    "encumbrance_settings": {
+        "base_mult": 5.0
+    },
+    "weight_threshold_light": 80.0,
+    "weight_threshold_medium": 160.0,
+    "weight_threshold_heavy": 240.0,
     "spells": [
         {
             "name": "新法术1",
@@ -375,8 +510,8 @@
     ],
     "spellcasting": {
         "ability": "wisdom",
-        "spell_save_dc": 10,
-        "spell_attack_bonus": 2,
+        "spell_save_dc": 14,
+        "spell_attack_bonus": 6,
         "slots": {
             "1": {
                 "max_slots": 4,
@@ -385,7 +520,7 @@
             },
             "2": {
                 "max_slots": 2,
-                "expended": 1,
+                "expended": 0,
                 "override": null
             },
             "3": {

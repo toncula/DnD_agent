@@ -1,6 +1,12 @@
 import sys
 import os
+
+# --- 必须在 import chromadb 之前禁用遥测和屏蔽日志 ---
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
 import logging
+# 屏蔽 chromadb 遥测模块的报错日志
+logging.getLogger('chromadb.telemetry').setLevel(logging.CRITICAL)
+
 from pathlib import Path
 
 # --- 日志配置 ---
@@ -40,8 +46,13 @@ try:
     db_path = str(BASE_DIR / "chroma_db_data")
     if not os.path.exists(db_path):
         os.makedirs(db_path)
-    client = chromadb.PersistentClient(path=db_path)
-    logger.info(f"成功连接到 ChromaDB: {db_path}")
+    # 禁用匿名遥测以消除 PostHog 报错
+    from chromadb.config import Settings
+    client = chromadb.PersistentClient(
+        path=db_path,
+        settings=Settings(anonymized_telemetry=False)
+    )
+    logger.info(f"成功连接到 ChromaDB (已禁用遥测): {db_path}")
 except Exception as e:
     logger.error(f"ChromaDB 初始化失败: {e}")
     client = None

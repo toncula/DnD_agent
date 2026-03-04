@@ -47,9 +47,11 @@ const handleHover = (item: any, event: MouseEvent) => {
       <InventoryList 
         v-else-if="activeTab === 'inventory'" 
         :inventory="inventory" 
+        :sheet="sheet"
         @update="v => emit('update:inventory', v)"
         @equip="v => emit('equip', v)"
         @hover-item="handleHover"
+        @update:sheet="v => emit('update:sheet', v)"
       />
       
       <SpellManager 

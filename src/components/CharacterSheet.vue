@@ -82,9 +82,15 @@ let isIncomingUpdate = false;
 let timeoutId: number | undefined;
 
 const handlePageUpdate = (partialData: any) => {
+  // 1. 深拷贝 localData 以触发 Vue 的响应式
+  const updatedData = JSON.parse(JSON.stringify(localData.value));
   for (const key in partialData) {
-    localData.value[key] = partialData[key];
+    updatedData[key] = partialData[key];
   }
+  // 2. 将更新后的数据赋值给 localData，这会确保所有引用它的子组件都刷新
+  localData.value = updatedData;
+  // 3. 立即触发同步
+  performSync();
 };
 
 const performSync = () => {
@@ -93,114 +99,16 @@ const performSync = () => {
   
   const dataToSend = JSON.parse(JSON.stringify(localData.value));
   
-  // 0. 重新计算总等级 (二次确认)
-  const currentLevel = (dataToSend.prog.classes || []).reduce((sum: number, c: any) => sum + (parseInt(c.level) || 0), 0) || 1;
-  dataToSend.prog.level = currentLevel;
-  const pb = Math.floor((currentLevel - 1) / 4) + 2;
-
-  // 1. 基础属性计算
-  const stats = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
-  stats.forEach(s => {
-    const stat = dataToSend[s];
-    stat.derived = (stat.base_score || 0) + (stat.racial_bonus || 0) + (stat.asi_bonus || 0) + (stat.bonus || 0);
-    stat.modifier = Math.floor((stat.derived - 10) / 2);
-    const save = dataToSend[s + '_save'] || dataToSend[s.substring(0,3) + '_save'];
-    if (save) save.derived = stat.modifier + (save.is_proficient ? pb : 0) + (save.bonus || 0);
-  });
-
-  // 2. 施法引擎计算 (核心判定)
-  const casterConfig: Record<string, number> = { '法师': 1, '牧师': 1, '德鲁伊': 1, '吟游诗人': 1, '术士': 1, '圣武士': 0.5, '游侠': 0.5, '奥法骑士': 0.33, '诡术随从': 0.33, '人造师': 0.5 };
-  let effectiveLevel = 0;
-  let pactLevel = 0;
-  (dataToSend.prog.classes || []).forEach((c: any) => {
-    if (casterConfig[c.name]) {
-      const rate = casterConfig[c.name];
-      if (rate === 1) effectiveLevel += c.level;
-      else if (rate === 0.5) effectiveLevel += Math.floor(c.level / 2);
-      else if (rate === 0.33) effectiveLevel += Math.floor(c.level / 3);
-    } else if (c.name === '邪术师') {
-      pactLevel = c.level;
-    }
-  });
-
-  // 施法能力判定：有效施法等级 > 0 或邪术师等级 > 0，或者手动添加了法术
-  dataToSend.can_cast = (effectiveLevel > 0 || pactLevel > 0 || (dataToSend.spells?.length > 0));
-
-  // 简易法术位计算表 (5E 标准)
-  const SLOT_TABLE = [
-    [0,0,0,0,0,0,0,0,0], // 0
-    [2,0,0,0,0,0,0,0,0], // 1
-    [3,0,0,0,0,0,0,0,0], // 2
-    [4,2,0,0,0,0,0,0,0], // 3
-    [4,3,0,0,0,0,0,0,0], // 4
-    [4,3,2,0,0,0,0,0,0], // 5
-    [4,3,3,0,0,0,0,0,0], // 6
-    [4,3,3,1,0,0,0,0,0], // 7
-    [4,3,3,2,0,0,0,0,0], // 8
-    [4,3,3,3,1,0,0,0,0], // 9
-    [4,3,3,3,2,0,0,0,0], // 10
-    [4,3,3,3,2,1,0,0,0], // 11
-    [4,3,3,3,2,1,0,0,0], // 12
-    [4,3,3,3,2,1,1,0,0], // 13
-    [4,3,3,3,2,1,1,0,0], // 14
-    [4,3,3,3,2,1,1,1,0], // 15
-    [4,3,3,3,2,1,1,1,0], // 16
-    [4,3,3,3,2,1,1,1,1], // 17
-    [4,3,3,3,3,1,1,1,1], // 18
-    [4,3,3,3,3,2,1,1,1], // 19
-    [4,3,3,3,3,2,2,1,1], // 20
-  ];
-  
-  if (!dataToSend.spellcasting) dataToSend.spellcasting = { slots: {} };
-  if (!dataToSend.spellcasting.slots) dataToSend.spellcasting.slots = {};
-  
-  const slots = SLOT_TABLE[Math.min(effectiveLevel, 20)];
-  for (let i = 1; i <= 9; i++) {
-    if (!dataToSend.spellcasting.slots[i]) dataToSend.spellcasting.slots[i] = { max_slots: 0, expended: 0 };
-    dataToSend.spellcasting.slots[i].max_slots = slots[i-1];
-  }
-
-  // 3. 战斗数值计算
-  const dexMod = dataToSend.dexterity.modifier;
-  const ac = dataToSend.combat.armor_class;
-  ac.derived = ac.override !== null ? ac.override : ((ac.base || 10) + dexMod + ac.bonus);
-  const init = dataToSend.combat.initiative;
-  init.derived = init.override !== null ? init.override : (dexMod + init.bonus);
-  const gdc = dataToSend.combat.general_dc;
-  gdc.derived = 8 + pb + (dataToSend[gdc.ability]?.modifier || 0) + gdc.bonus;
-
-  const skillToStat: Record<string, string> = { athletics: 'strength', acrobatics: 'dexterity', sleight_of_hand: 'dexterity', stealth: 'dexterity', arcana: 'intelligence', history: 'intelligence', investigation: 'intelligence', nature: 'intelligence', religion: 'intelligence', animal_handling: 'wisdom', insight: 'wisdom', medicine: 'wisdom', perception: 'wisdom', survival: 'wisdom', deception: 'charisma', intimidation: 'charisma', performance: 'charisma', persuasion: 'charisma' };
-  Object.entries(skillToStat).forEach(([sk, st]) => {
-    if (dataToSend[sk]) {
-      const s = dataToSend[sk];
-      s.derived = (dataToSend[st]?.modifier || 0) + (s.is_proficient ? pb : 0) + (s.is_expertise ? pb : 0) + (s.bonus || 0);
-    }
-  });
-
-  const conMod = dataToSend.constitution.modifier;
-  const hpRolls = dataToSend.combat?.hp_rolls || [];
-  const primaryClass = dataToSend.prog.classes?.find((c: any) => c.is_primary) || dataToSend.prog.classes?.[0];
-  if (primaryClass) {
-    const sub = primaryClass.subclass ? `${primaryClass.subclass} ` : '';
-    dataToSend.prog.character_class = `${sub}${primaryClass.name}`;
-  }
-  const hdValue = parseInt(primaryClass?.hit_die?.replace('d', '') || '8');
-  let calcHPBase = (hpRolls[0] || hdValue) + conMod;
-  for (let i = 1; i < currentLevel; i++) calcHPBase += ((hpRolls[i] || Math.floor(hdValue/2)+1) + conMod);
-  calcHPBase += (dataToSend.combat.bonus_hp_per_level || 0) * currentLevel;
-  
-  // 关键：这里直接设为数字，不要搞成对象
-  dataToSend.combat.hp_max = dataToSend.combat.hp_max_override !== undefined ? dataToSend.combat.hp_max_override : calcHPBase;
-
-  isIncomingUpdate = true;
-  dataToSend.combat.proficiency_bonus = pb;
-  Object.assign(localData.value, dataToSend);
-  setTimeout(() => { isIncomingUpdate = false; }, 50);
+  // 后端负责所有核心计算，这里只发送数据并同步状态
   emit('update', dataToSend);
-  setTimeout(() => { if (syncStatus.value === 'syncing') syncStatus.value = 'saved'; }, 1000);
+  
+  setTimeout(() => { 
+    if (syncStatus.value === 'syncing') syncStatus.value = 'saved'; 
+  }, 800);
 };
 
-watch(localData, () => { if (!isIncomingUpdate) { syncStatus.value = 'syncing'; if (timeoutId) clearTimeout(timeoutId); timeoutId = window.setTimeout(performSync, 1200); } }, { deep: true });
+// 移除原有的 watch 自动同步逻辑，改为由 PageUpdate 主动触发或手动保存感官
+// watch(localData, ...) -> 已移除
 onUnmounted(() => { if (timeoutId) clearTimeout(timeoutId); });
 </script>
 

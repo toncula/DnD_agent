@@ -33,163 +33,59 @@ const updateSheet = (key: string, val: any) => {
 };
 
 const assignMultiple = (newData: any) => {
-  emit('update', newData);
+  // 确保 newData 是一个新的对象引用，触发 CharacterSheet 的 handlePageUpdate
+  emit('update', { ...newData });
 };
 
-// 关键功能：监听背包变化，同步到纸娃娃
-watch(() => props.sheet.inventory, (newInv) => {
-  if (!newInv) return;
-  const newSheet = JSON.parse(JSON.stringify(props.sheet));
-  let changed = false;
-
-  // 1. 同步护甲 AC
-  const equippedArmor = newInv.find((i: any) => i.category === '装备' && i.item_type === '护甲' && i.is_equipped);
-  const targetBaseAC = equippedArmor ? parseInt(equippedArmor.description?.match(/\d+/)?.[0] || '11') : 10;
-  
-  if (newSheet.combat.armor_class.base !== targetBaseAC) {
-    newSheet.combat.armor_class.base = targetBaseAC;
-    changed = true;
-  }
-
-  // 2. 同步武器数据
-  const mainWeapon = newInv.find((i: any) => i.is_equipped && (i.slot_type === '主手' || i.slot_type === '双手'));
-  const offWeapon = newInv.find((i: any) => i.is_equipped && i.slot_type === '副手' && i.item_type === '武器');
-
-  const syncWeapon = (invItem: any, index: number) => {
-    if (index === 1 && mainWeapon?.slot_type === '双手') {
-      const dmg = mainWeapon.description?.match(/\d+d\d+/)?.[0] || '1d4';
-      if (!newSheet.weapons[1] || !newSheet.weapons[1].is_2h_occupied || newSheet.weapons[1].name !== mainWeapon.name) {
-        newSheet.weapons[1] = {
-          name: mainWeapon.name,
-          damage_dice: dmg,
-          is_2h_occupied: true, 
-          is_proficient: true
-        };
-        return true;
-      }
-      return false;
-    }
-
-    if (!invItem) {
-      if (newSheet.weapons[index] && newSheet.weapons[index].name !== '空手') {
-        newSheet.weapons[index] = { name: '空手', damage_dice: '1d4' };
-        return true;
-      }
-      return false;
-    }
-    
-    const dmg = invItem.description?.match(/\d+d\d+/)?.[0] || '1d4';
-    const currentW = newSheet.weapons[index];
-    
-    if (!currentW || currentW.name !== invItem.name || currentW.damage_dice !== dmg) {
-      newSheet.weapons[index] = {
-        name: invItem.name,
-        damage_dice: dmg,
-        description: invItem.description,
-        weight: invItem.weight,
-        slot_type: invItem.slot_type,
-        is_proficient: true
-      };
-      return true;
-    }
-    return false;
-  };
-
-  const c1 = syncWeapon(mainWeapon, 0);
-  const c2 = syncWeapon(offWeapon, 1);
-  if (c1 || c2) changed = true;
-
-  // 3. 同步盾牌状态
-  const equippedShield = newInv.find((i: any) => i.category === '装备' && i.item_type === '盾牌' && i.is_equipped);
-  const hasShield = !!equippedShield && mainWeapon?.slot_type !== '双手'; 
-  if (newSheet.has_shield !== hasShield) {
-    newSheet.has_shield = hasShield;
-    changed = true;
-  }
-
-  if (changed) {
-    emit('update', newSheet);
-  }
-}, { deep: true });
-
+// 后端负责所有 AC 和攻击派生计算，前端仅负责 UI 交互和简单的互斥逻辑
 const handleEquip = (item: any) => {
-  const newSheet = JSON.parse(JSON.stringify(props.sheet));
-  const invItem = newSheet.inventory.find((i: any) => i.name === item.name);
-  if (!invItem) return;
+  const newInventory = [...props.sheet.inventory];
+  const targetItem = newInventory.find(i => i.name === item.name);
+  if (!targetItem) return;
 
-  if (invItem.is_equipped) {
-    invItem.is_equipped = false;
-    if (invItem.item_type === '护甲' || invItem.slot_type === '躯干') newSheet.combat.armor_class.base = 10;
-    else if (invItem.item_type === '盾牌') newSheet.has_shield = false;
-    else if (invItem.slot_type === '主手' || invItem.slot_type === '双手') {
-       newSheet.weapons[0] = { name: '空手', damage_dice: '1d4' };
-       if (invItem.slot_type === '双手') newSheet.weapons[1] = { name: '空手', damage_dice: '1d4' };
-    }
-    else if (invItem.slot_type === '副手') {
-       if (newSheet.weapons[1]) newSheet.weapons[1] = { name: '空手', damage_dice: '1d4' };
-    }
-    emit('update', newSheet);
-    return;
-  }
-
-  const slot = item.slot_type;
-  const itemType = item.item_type;
-  const itemName = item.name.toLowerCase();
+  const isNowEquipped = !targetItem.is_equipped;
   
-  newSheet.inventory.forEach((i: any) => {
-    if (i.slot_type === slot && slot !== '' && i.is_equipped) i.is_equipped = false;
-    if (i.item_type === itemType && itemType === '盾牌' && i.is_equipped) i.is_equipped = false;
-    if (slot === '双手' && i.slot_type === '副手' && i.is_equipped) i.is_equipped = false;
-  });
-  invItem.is_equipped = true;
-
-  if (itemType === '护甲' || slot === '躯干') {
-    const match = item.description?.match(/\d+/);
-    newSheet.combat.armor_class.base = match ? parseInt(match[0]) : 11;
-  } 
-  else if (itemType === '盾牌') {
-    newSheet.has_shield = true;
-    if (newSheet.weapons.length > 1) {
-      newSheet.weapons[1] = { name: '空手', damage_dice: '1d4' };
-      newSheet.inventory.forEach((i: any) => {
-        if (i.slot_type === '副手' && i.item_type === '武器' && i.is_equipped) i.is_equipped = false;
+  if (isNowEquipped) {
+    // 互斥逻辑
+    if (targetItem.item_type === '护甲' || targetItem.slot_type === '躯干') {
+      // 卸下其他护甲
+      newInventory.forEach(i => {
+        if ((i.item_type === '护甲' || i.slot_type === '躯干') && i.is_equipped) i.is_equipped = false;
       });
     }
-  } 
-  else if (itemType === '武器' || slot === '主手' || slot === '副手' || slot === '双手') {
-    const damageMatch = item.description?.match(/\d+d\d+/);
-    const newWeapon = {
-      name: item.name,
-      damage_dice: damageMatch ? damageMatch[0] : '1d4',
-      is_finesse: item.description?.includes('灵巧') || itemName.includes('匕首') || itemName.includes('弓'),
-      is_proficient: true,
-      category: '装备',
-      item_type: '武器',
-      slot_type: slot,
-      description: item.description,
-      weight: item.weight
-    };
     
-    if (slot === '双手') {
-      newSheet.has_shield = false;
-      newSheet.weapons[0] = newWeapon;
-      newSheet.weapons[1] = { ...newWeapon, is_2h_occupied: true }; 
-    } 
-    else if (slot === '主手') {
-      if (newSheet.weapons.length === 0) newSheet.weapons.push(newWeapon);
-      else newSheet.weapons[0] = newWeapon;
-    } 
-    else if (slot === '副手') {
-      newSheet.has_shield = false; 
-      if (newSheet.weapons.length < 2) {
-        newSheet.weapons = [newSheet.weapons[0] || { name: '空手', damage_dice: '1d4' }, newWeapon];
-      } else {
-        newSheet.weapons[1] = newWeapon;
-      }
+    if (targetItem.slot_type === '双手') {
+      // 卸下副手物品（盾牌或副手武器）
+      newInventory.forEach(i => {
+        if (i.slot_type === '副手' && i.is_equipped) i.is_equipped = false;
+        if (i.item_type === '盾牌' && i.is_equipped) i.is_equipped = false;
+        if (i.slot_type === '双手' && i.is_equipped) i.is_equipped = false;
+        if (i.slot_type === '主手' && i.is_equipped) i.is_equipped = false;
+      });
+    }
+
+    if (targetItem.slot_type === '主手') {
+      newInventory.forEach(i => {
+        if ((i.slot_type === '主手' || i.slot_type === '双手') && i.is_equipped) i.is_equipped = false;
+      });
+    }
+
+    if (targetItem.slot_type === '副手' || targetItem.item_type === '盾牌') {
+      newInventory.forEach(i => {
+        if ((i.slot_type === '副手' || i.item_type === '盾牌' || i.slot_type === '双手') && i.is_equipped) i.is_equipped = false;
+      });
+    }
+    
+    // 槽位互斥
+    if (targetItem.slot_type && targetItem.slot_type !== '') {
+       newInventory.forEach(i => {
+         if (i.slot_type === targetItem.slot_type && i.is_equipped) i.is_equipped = false;
+       });
     }
   }
-  
-  emit('update', newSheet);
+
+  targetItem.is_equipped = isNowEquipped;
+  emit('update', { ...props.sheet, inventory: newInventory });
 };
 </script>
 

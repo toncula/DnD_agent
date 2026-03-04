@@ -20,8 +20,8 @@ from src.engine.models import (
     SkillField,
     SaveField,
     CombatStats,
-    WeaponItem,
     InventoryItem,
+    EncumbranceSettings,
     Spell,
     SpellcastingStats,
     HitDiceSlot,
@@ -189,9 +189,10 @@ class CharacterSheet(BaseModel):
 
     # --- 战斗与装备 ---
     combat: CombatStats = Field(default_factory=CombatStats)
-    equipped_armor_base_ac: int = Field(default=0)
-    has_shield: bool = Field(default=False)
-    weapons: List[WeaponItem] = Field(default_factory=list)
+    # [移除已整合到背包的字段]
+    # equipped_armor_base_ac: int = Field(default=0)
+    # has_shield: bool = Field(default=False)
+    # weapons: List[WeaponItem] = Field(default_factory=list)
 
     # --- [新增] 特性、背包与施法系统 ---
     features: List[Feature] = Field(
@@ -201,6 +202,11 @@ class CharacterSheet(BaseModel):
     inventory: List[InventoryItem] = Field(default_factory=list, description="背包物品")
     total_weight: float = Field(default=0.0, description="当前背包总重量 (自动计算)")
     carrying_capacity: float = Field(default=0.0, description="最大负重能力 (自动计算)")
+    
+    encumbrance_settings: EncumbranceSettings = Field(default_factory=EncumbranceSettings, description="负重设置")
+    weight_threshold_light: float = Field(default=0.0)
+    weight_threshold_medium: float = Field(default=0.0)
+    weight_threshold_heavy: float = Field(default=0.0)
 
     spells: List[Spell] = Field(default_factory=list, description="法术书/已知法术")
     spellcasting: SpellcastingStats = Field(
@@ -248,20 +254,27 @@ class CharacterSheet(BaseModel):
         else:
             self.combat.initiative.derived = self.dexterity.modifier + self.combat.initiative.bonus
             
-        base_ac = self.equipped_armor_base_ac if self.equipped_armor_base_ac > 0 else 10
-        shield_bonus = 2 if self.has_shield else 0
-        dex_bonus = (
-            self.dexterity.modifier
-            if self.equipped_armor_base_ac == 0
-            else min(2, self.dexterity.modifier)
-        )
-        if self.equipped_armor_base_ac >= 15:
-            dex_bonus = 0
+        # --- 增强型 AC 计算逻辑 ---
+        armor_item = next((item for item in self.inventory if item.is_equipped and item.item_type == "护甲"), None)
+        shield_item = next((item for item in self.inventory if item.is_equipped and item.item_type == "盾牌"), None)
+        
+        base_ac = 10
+        dex_mod = self.dexterity.modifier
+        
+        if armor_item and armor_item.ac_base is not None:
+            base_ac = armor_item.ac_base
+            if armor_item.dex_cap is not None:
+                dex_mod = min(dex_mod, armor_item.dex_cap)
+        else:
+            # 默认无甲: 10 + 敏捷 (此处可根据需要扩展武僧/野蛮人等无甲防御)
+            pass
             
+        shield_bonus = shield_item.ac_bonus if shield_item else 0
+        
         if self.combat.armor_class.override is not None:
             self.combat.armor_class.derived = self.combat.armor_class.override
         else:
-            self.combat.armor_class.derived = base_ac + dex_bonus + shield_bonus + self.combat.armor_class.bonus
+            self.combat.armor_class.derived = base_ac + dex_mod + shield_bonus + self.combat.armor_class.bonus
 
         # 5. 计算完整的 18 项技能
         self._calc_skill(self.athletics, self.strength.modifier, pb)
@@ -283,23 +296,42 @@ class CharacterSheet(BaseModel):
         self._calc_skill(self.performance, self.charisma.modifier, pb)
         self._calc_skill(self.persuasion, self.charisma.modifier, pb)
 
-        # 6. 计算武器攻击加值
-        for weapon in self.weapons:
-            use_modifier = self.strength.modifier
-            if weapon.is_finesse and self.dexterity.modifier > self.strength.modifier:
-                use_modifier = self.dexterity.modifier
-
-            atk_bonus = use_modifier
-            if weapon.is_proficient:
-                atk_bonus += pb
-            weapon.derived_attack_bonus = atk_bonus
-            weapon.derived_damage_bonus = use_modifier
+        # 6. 计算武器攻击与伤害 (基于背包中已装备的武器)
+        for item in self.inventory:
+            if item.item_type == "武器" and item.is_equipped:
+                # 判定属性: 默认力量，灵巧武器可选敏捷
+                use_mod = self.strength.modifier
+                is_finesse = any(p in item.properties for p in ["灵巧", "finesse"])
+                is_ranged = any(p in item.properties for p in ["远程", "ranged", "投掷", "thrown"])
+                
+                if is_finesse:
+                    use_mod = max(self.strength.modifier, self.dexterity.modifier)
+                elif is_ranged:
+                    use_mod = self.dexterity.modifier
+                
+                # 攻击加值 = PB (如果熟练) + 属性修正 + 魔法加值
+                atk_pb = pb if item.is_proficient else 0
+                total_atk = atk_pb + use_mod + item.attack_bonus
+                item.derived_attack_roll = f"+{total_atk}"
+                
+                # 伤害 = 伤害骰 + 属性修正 + 魔法加值
+                total_dmg_bonus = use_mod + item.damage_bonus
+                sign = "+" if total_dmg_bonus >= 0 else ""
+                item.derived_damage_roll = f"{item.damage_dice}{sign}{total_dmg_bonus}"
 
         # --- [新增] 7. 负重计算逻辑 ---
         # 遍历背包，总重量 = 单件重量 * 数量
         self.total_weight = sum(item.weight * item.quantity for item in self.inventory)
-        # 5e 标准规则：最大负重(磅) = 力量最终值 * 15
-        self.carrying_capacity = self.strength.derived * 15
+        
+        # 力量调整值对应的负重阈值 (基础倍率 x1, x2, x3)
+        str_val = self.strength.derived
+        base = self.encumbrance_settings.base_mult
+        self.weight_threshold_light = str_val * base
+        self.weight_threshold_medium = str_val * base * 2
+        self.weight_threshold_heavy = str_val * base * 3
+        
+        # 最大负重能力（通常对应重载阈值）
+        self.carrying_capacity = self.weight_threshold_heavy
 
         # --- [新增] 8. 施法面板计算逻辑 ---
         # 自动提取施法关键属性的调整值 (德鲁伊是感知 Wisdom)

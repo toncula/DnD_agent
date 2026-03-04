@@ -165,31 +165,49 @@ class CombatStats(BaseModel):
     general_dc: GeneralDC = Field(default_factory=GeneralDC)
 
 
-class WeaponItem(BaseModel):
-    name: str
-    damage_dice: str
-    is_finesse: bool = Field(default=False)
-    is_proficient: bool = Field(default=True)
-    derived_attack_bonus: int = Field(default=0)
-    derived_damage_bonus: int = Field(default=0)
-
-
-# ==========================================
-# 4. 背包与物品模块 (对应"背包.csv")
-# ==========================================
-
+class ItemAction(BaseModel):
+    """物品附带的特殊动作、技能或战技"""
+    name: str = Field(..., description="动作名称")
+    activation: str = Field(default="1动作", description="消耗类型: 动作, 附赠动作, 反应, 被动, 休息恢复")
+    description: str = Field(default="", description="技能描述")
 
 class InventoryItem(BaseModel):
-    """背包里的单件物品"""
+    """背包里的单件物品，整合了武器、护甲、盾牌等属性"""
 
     name: str = Field(..., description="物品名称")
     quantity: int = Field(default=1, description="数量")
     weight: float = Field(default=0.0, description="单件重量(磅)")
     category: str = Field(default="杂物", description="顶级类别: 装备, 消耗品, 杂物")
-    item_type: str = Field(default="", description="子类别: 武器, 护甲, 盾牌, 饰品")
+    item_type: str = Field(default="", description="子类别: 武器, 护甲, 盾牌, 饰品, 奇物")
     slot_type: str = Field(default="", description="装备槽位: 头部, 躯干, 主手, 副手, 双手, 足部, 戒指, 项链")
     is_equipped: bool = Field(default=False, description="是否已装备")
+    is_proficient: bool = Field(default=True, description="是否熟练")
     description: str = Field(default="", description="描述")
+    
+    # --- 新增 5E 属性 ---
+    rarity: str = Field(default="普通", description="稀有度: 普通, 精良, 稀有, 极稀有, 传说, 神器")
+    requires_attunement: bool = Field(default=False, description="是否需要同调")
+    is_attuned: bool = Field(default=False, description="是否已同调")
+    properties: list[str] = Field(default_factory=list, description="物品特性: 灵巧, 轻型, 重型, 双手, 触及, 投掷, 装填, 等")
+    
+    # 武器相关
+    damage_dice: str = Field(default="", description="伤害骰 (如: 1d8)")
+    damage_type: str = Field(default="", description="伤害类型 (如: 挥砍, 穿刺, 钝击)")
+    attack_bonus: int = Field(default=0, description="魔法攻击加值")
+    damage_bonus: int = Field(default=0, description="魔法伤害加值")
+    weapon_mastery: str = Field(default="", description="2024版武器专精: Topple, Vex, Slow, 等")
+    special_actions: list[ItemAction] = Field(default_factory=list, description="物品附带的特殊技能/动作")
+    
+    # 护甲/盾牌相关
+    ac_base: Optional[int] = Field(default=None, description="基础护甲值 (如: 11, 14, 18)")
+    ac_bonus: int = Field(default=0, description="附加 AC 加值 (如盾牌的+2, 附魔的+1)")
+    dex_cap: Optional[int] = Field(default=None, description="敏捷加值上限 (重甲为0, 中甲通常为2)")
+    strength_req: int = Field(default=0, description="力量要求")
+    stealth_disadv: bool = Field(default=False, description="潜行劣势")
+
+    # 派生属性 (由后端计算)
+    derived_attack_roll: str = Field(default="", description="派生攻击骰描述 (如: +5)")
+    derived_damage_roll: str = Field(default="", description="派生伤害骰描述 (如: 1d8+3)")
 
 
 # ==========================================
@@ -229,6 +247,10 @@ class PactMagicSlot(BaseModel):
     max_slots: int = Field(default=0, description="最大法术位数量")
     expended: int = Field(default=0, description="已消耗数量")
 
+
+class EncumbranceSettings(BaseModel):
+    """负重系统设置"""
+    base_mult: float = Field(default=5.0, description="基础负重倍率 (轻载)，中载和重载将自动设为 2x 和 3x")
 
 class SpellcastingStats(BaseModel):
     ability: str = Field(
