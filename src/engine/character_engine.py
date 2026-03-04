@@ -134,12 +134,7 @@ def calculate_max_spell_slots(class_levels: dict) -> dict:
                 ecl += math.floor(lvl / 3)
         standard_slots = STANDARD_SLOTS[min(ecl, 20)]
 
-    pact_slots = None
-    if pact_magic_level > 0:
-        count, level = PACT_MAGIC_SLOTS.get(pact_magic_level, (0, 0))
-        pact_slots = {"count": count, "level": level}
-
-    return {"standard_slots": standard_slots, "pact_magic": pact_slots}
+    return {"standard_slots": standard_slots}
 
 
 # ==========================================
@@ -233,7 +228,7 @@ class CharacterSheet(BaseModel):
             "charisma": self.charisma,
         }
         for name, stat in ability_map.items():
-            calculated_base = stat.base_score + stat.racial_bonus + stat.asi_bonus
+            calculated_base = stat.base_score + stat.racial_bonus + stat.asi_bonus + stat.bonus
             if stat.override is not None:
                 stat.derived = stat.override
             else:
@@ -362,12 +357,6 @@ class CharacterSheet(BaseModel):
                 slot_obj.max_slots = slot_obj.override
             else:
                 slot_obj.max_slots = standard_array[i]
-
-        # 填充契约魔法位
-        pact_data = slots_data["pact_magic"]
-        if pact_data:
-            self.spellcasting.pact_magic.level = pact_data["level"]
-            self.spellcasting.pact_magic.max_slots = pact_data["count"]
 
         # --- [新增] 10. 生命上限与生命骰池计算 ---
         total_level = self.prog.level

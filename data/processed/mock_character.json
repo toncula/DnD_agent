@@ -25,14 +25,21 @@
     },
     "prog": {
         "character_class": "德鲁伊",
-        "level": 3,
+        "level": 4,
         "classes": [
             {
-                "name": "德鲁伊",
+                "name": "野蛮人",
                 "level": 3,
                 "subclass": "",
                 "is_primary": true,
-                "hit_die": "d8"
+                "hit_die": "d12"
+            },
+            {
+                "name": "战士",
+                "level": 1,
+                "subclass": "",
+                "is_primary": false,
+                "hit_die": "d10"
             }
         ],
         "race": "人类",
@@ -43,6 +50,7 @@
         "base_score": 16,
         "racial_bonus": 0,
         "asi_bonus": 0,
+        "bonus": 0,
         "override": null,
         "derived": 16,
         "modifier": 3,
@@ -52,6 +60,7 @@
         "base_score": 16,
         "racial_bonus": 0,
         "asi_bonus": 0,
+        "bonus": 0,
         "override": null,
         "derived": 16,
         "modifier": 3,
@@ -61,6 +70,7 @@
         "base_score": 14,
         "racial_bonus": 0,
         "asi_bonus": 0,
+        "bonus": 0,
         "override": null,
         "derived": 14,
         "modifier": 2,
@@ -70,6 +80,7 @@
         "base_score": 10,
         "racial_bonus": 0,
         "asi_bonus": 0,
+        "bonus": 0,
         "override": null,
         "derived": 10,
         "modifier": 0,
@@ -79,6 +90,7 @@
         "base_score": 18,
         "racial_bonus": 0,
         "asi_bonus": 0,
+        "bonus": 0,
         "override": null,
         "derived": 18,
         "modifier": 4,
@@ -88,6 +100,7 @@
         "base_score": 10,
         "racial_bonus": 0,
         "asi_bonus": 0,
+        "bonus": 0,
         "override": null,
         "derived": 10,
         "modifier": 0,
@@ -286,25 +299,28 @@
             8
         ],
         "bonus_hp_per_level": 0,
-        "hp_max": 30,
+        "hp_max": 32,
         "hp_current": 10,
         "temp_hp": 0,
         "defenses": {
             "resistances": [],
             "immunities": [],
-            "vulnerabilities": [],
-            "damage_reduction": 0
+            "vulnerabilities": []
         },
         "class_resources": [
             {
-                "name": "新资源",
+                "name": "",
                 "current": 3,
                 "max": 3,
                 "reset_on": "长休"
             }
         ],
         "hit_dice": {
-            "d8": {
+            "d10": {
+                "total": 1,
+                "expended": 0
+            },
+            "d12": {
                 "total": 3,
                 "expended": 0
             }
@@ -342,7 +358,7 @@
             "category": "装备",
             "item_type": "武器",
             "slot_type": "双手",
-            "is_equipped": true,
+            "is_equipped": false,
             "is_proficient": true,
             "description": "一把锋利的长剑。",
             "rarity": "普通",
@@ -514,12 +530,12 @@
         "spell_attack_bonus": 6,
         "slots": {
             "1": {
-                "max_slots": 4,
+                "max_slots": 0,
                 "expended": 0,
                 "override": null
             },
             "2": {
-                "max_slots": 2,
+                "max_slots": 0,
                 "expended": 0,
                 "override": null
             },
@@ -558,11 +574,6 @@
                 "expended": 0,
                 "override": null
             }
-        },
-        "pact_magic": {
-            "level": 0,
-            "max_slots": 0,
-            "expended": 0
         }
     }
 }

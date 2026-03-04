@@ -108,18 +108,26 @@ const toggleSaveProficiency = (saveKey: string) => {
         </div>
       </div>
 
-      <div v-if="editingKey === item.key" class="mt-3 pt-3 border-t border-zinc-800 flex gap-2 animate-in fade-in slide-in-from-top-1">
-         <div class="flex-1 flex flex-col gap-1">
-           <span class="text-[8px] text-zinc-600 font-black">基础</span>
-           <input type="number" :value="sheet[item.key].base_score" @input="e => updateValue(item.key, 'base_score', (e.target as HTMLInputElement).value)" class="w-full bg-zinc-950 border border-zinc-700 rounded text-center text-xs py-1 text-white outline-none" />
+      <div v-if="editingKey === item.key" class="mt-3 pt-3 border-t border-zinc-800 grid grid-cols-5 gap-2 animate-in fade-in slide-in-from-top-1">
+         <div class="flex flex-col gap-1">
+           <span class="text-[8px] text-zinc-500 font-black uppercase tracking-tighter">基础</span>
+           <input type="number" :value="sheet[item.key].base_score" @input="e => updateValue(item.key, 'base_score', (e.target as HTMLInputElement).value)" class="w-full bg-zinc-950 border border-zinc-700 rounded text-center text-[10px] py-1 text-white outline-none focus:border-zinc-500" />
          </div>
-         <div class="flex-1 flex flex-col gap-1">
-           <span class="text-[8px] text-blue-500 font-black">加值</span>
-           <input type="number" :value="sheet[item.key].bonus" @input="e => updateValue(item.key, 'bonus', (e.target as HTMLInputElement).value)" class="w-full bg-zinc-950 border border-blue-900/50 rounded text-center text-xs py-1 text-blue-400 outline-none" />
+         <div class="flex flex-col gap-1">
+           <span class="text-[8px] text-blue-400 font-black uppercase tracking-tighter">种族</span>
+           <input type="number" :value="sheet[item.key].racial_bonus" @input="e => updateValue(item.key, 'racial_bonus', (e.target as HTMLInputElement).value)" class="w-full bg-zinc-950 border border-blue-900/50 rounded text-center text-[10px] py-1 text-blue-400 outline-none focus:border-blue-500" />
          </div>
-         <div class="flex-1 flex flex-col gap-1">
-           <span class="text-[8px] text-emerald-500 font-black">豁免</span>
-           <input type="number" :value="sheet[item.saveKey].bonus" @input="e => updateValue(item.saveKey, 'bonus', (e.target as HTMLInputElement).value)" class="w-full bg-zinc-950 border border-emerald-900/50 rounded text-center text-xs py-1 text-emerald-400 outline-none" />
+         <div class="flex flex-col gap-1">
+           <span class="text-[8px] text-amber-400 font-black uppercase tracking-tighter">ASI</span>
+           <input type="number" :value="sheet[item.key].asi_bonus" @input="e => updateValue(item.key, 'asi_bonus', (e.target as HTMLInputElement).value)" class="w-full bg-zinc-950 border border-amber-900/50 rounded text-center text-[10px] py-1 text-amber-400 outline-none focus:border-amber-500" />
+         </div>
+         <div class="flex flex-col gap-1">
+           <span class="text-[8px] text-purple-400 font-black uppercase tracking-tighter">其他</span>
+           <input type="number" :value="sheet[item.key].bonus" @input="e => updateValue(item.key, 'bonus', (e.target as HTMLInputElement).value)" class="w-full bg-zinc-950 border border-purple-900/50 rounded text-center text-[10px] py-1 text-purple-400 outline-none focus:border-purple-500" />
+         </div>
+         <div class="flex flex-col gap-1">
+           <span class="text-[8px] text-emerald-400 font-black uppercase tracking-tighter">豁免</span>
+           <input type="number" :value="sheet[item.saveKey].bonus" @input="e => updateValue(item.saveKey, 'bonus', (e.target as HTMLInputElement).value)" class="w-full bg-zinc-950 border border-emerald-900/50 rounded text-center text-[10px] py-1 text-emerald-400 outline-none focus:border-emerald-500" />
          </div>
       </div>
     </div>

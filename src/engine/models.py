@@ -71,6 +71,7 @@ class StatField(BaseModel):
     base_score: int = Field(default=10, description="初始值")
     racial_bonus: int = Field(default=0, description="种族加值")
     asi_bonus: int = Field(default=0, description="成长值 (能力值提升或专长)")
+    bonus: int = Field(default=0, description="其他加值 (如魔法道具、永久药水)")
     override: Optional[int] = Field(default=None, description="修正值 (强制锁定值)")
     derived: int = Field(default=10, description="最终计算结果")
     modifier: int = Field(default=0, description="属性调整值")
@@ -133,7 +134,6 @@ class Defenses(BaseModel):
     resistances: list[str] = Field(default_factory=list)
     immunities: list[str] = Field(default_factory=list)
     vulnerabilities: list[str] = Field(default_factory=list)
-    damage_reduction: int = Field(default=0)
 
 class CombatStats(BaseModel):
     # --- 生命值系统 ---
@@ -240,14 +240,6 @@ class SpellSlot(BaseModel):
     )
 
 
-class PactMagicSlot(BaseModel):
-    """邪术师特有的契约魔法位"""
-
-    level: int = Field(default=0, description="契约魔法的固定环阶")
-    max_slots: int = Field(default=0, description="最大法术位数量")
-    expended: int = Field(default=0, description="已消耗数量")
-
-
 class EncumbranceSettings(BaseModel):
     """负重系统设置"""
     base_mult: float = Field(default=5.0, description="基础负重倍率 (轻载)，中载和重载将自动设为 2x 和 3x")
@@ -264,7 +256,4 @@ class SpellcastingStats(BaseModel):
     slots: dict[str, SpellSlot] = Field(
         default_factory=lambda: {str(i): SpellSlot() for i in range(1, 10)},
         description="各环阶法术位，键为 '1' 到 '9'",
-    )
-    pact_magic: PactMagicSlot = Field(
-        default_factory=PactMagicSlot, description="契约魔法位状态"
     )
